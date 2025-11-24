@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import Dropzone from "@/components/ui/dropzone";
 import { Typography } from "@/components/ui/typography";
 import { ArrowLeft, Plus, SaveIcon, Trash2, X, EyeIcon } from "lucide-react";
-import { useCreateQuiz } from "./mutation/useCreateQuiz";
+import { useCreateQuiz } from "@/api/quiz/useCreateQuiz";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -41,6 +41,7 @@ function CreateQuiz() {
   const navigate = useNavigate();
   const createQuiz = useCreateQuiz;
 
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<File | null>(null);
@@ -122,8 +123,16 @@ function CreateQuiz() {
 
     const parseResult = quizSchema.safeParse(payload);
     if (!parseResult.success) {
-      console.error("Validation errors:", parseResult.error.format());
-      toast.error("Please check your input data");
+      const issues = parseResult.error.issues;
+
+      const errObj: Record<string, string> = {};
+      issues.forEach((issue) => {
+        const key = issue.path.join(".");
+        errObj[key] = issue.message;
+      });
+
+      setFormErrors(errObj);
+      toast.error(issues[0].message);
       return;
     }
 
@@ -166,14 +175,19 @@ function CreateQuiz() {
             </Typography>
           </div>
           <div className="bg-white w-full h-full p-6 space-y-6 rounded-xl border">
-            <FormField
-              required
-              label="Game Title"
-              placeholder="Title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
+            <div>
+              <FormField
+                required
+                label="Game Title"
+                placeholder="Title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+              {formErrors["title"] && (
+                <p className="text-sm text-red-500">{formErrors["title"]}</p>
+              )}
+            </div>
             <TextareaField
               label="Description"
               placeholder="Describe your quiz game"
@@ -181,13 +195,20 @@ function CreateQuiz() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-            <Dropzone
-              required
-              label="Thumbnail Image"
-              allowedTypes={["image/png", "image/jpeg"]}
-              maxSize={2 * 1024 * 1024}
-              onChange={(file) => setThumbnail(file)}
-            />
+            <div>
+              <Dropzone
+                required
+                label="Thumbnail Image"
+                allowedTypes={["image/png", "image/jpeg"]}
+                maxSize={2 * 1024 * 1024}
+                onChange={(file) => setThumbnail(file)}
+              />
+              {formErrors["thumbnail"] && (
+                <p className="text-sm text-red-500">
+                  {formErrors["thumbnail"]}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex justify-between items-center">
             <Typography variant="p">
@@ -217,16 +238,23 @@ function CreateQuiz() {
                 />
               </div>
 
-              <TextareaField
-                required
-                label="Question"
-                placeholder="Type your question here"
-                rows={4}
-                value={q.questionText}
-                onChange={(e) =>
-                  handleQuestionTextChange(qIndex, e.target.value)
-                }
-              />
+              <div>
+                <TextareaField
+                  required
+                  label="Question"
+                  placeholder="Type your question here"
+                  rows={4}
+                  value={q.questionText}
+                  onChange={(e) =>
+                    handleQuestionTextChange(qIndex, e.target.value)
+                  }
+                />
+                {formErrors[`questions.${qIndex}.questionText`] && (
+                  <p className="text-sm text-red-500">
+                    {formErrors[`questions.${qIndex}.questionText`]}
+                  </p>
+                )}
+              </div>
 
               <Dropzone
                 label="Question Image"
@@ -240,7 +268,9 @@ function CreateQuiz() {
               />
 
               <div className="grid w-full items-center gap-1.5">
-                <Label className="mb-2">Answer Options *</Label>
+                <Label className="mb-2">
+                  Answer Options <span className="text-red-500">*</span>
+                </Label>
                 <div className="space-x-4 flex">
                   <div className="space-y-3 mt-3">
                     {q.answers.map((a, aIndex) => (

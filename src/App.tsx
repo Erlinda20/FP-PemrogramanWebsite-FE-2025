@@ -5,7 +5,8 @@ import Sandbox from "./pages/Sandbox";
 import Login from "./pages/Login";
 import ProfilePage from "./pages/ProfilePage";
 import MyProjectsPage from "./pages/MyProjectsPage";
-import CreateQuiz from "./pages/create-quiz/CreateQuiz";
+import CreateQuiz from "./pages/CreateQuiz";
+import EditQuiz from "./pages/EditQuiz";
 import Quiz from "./pages/Quiz";
 import ProtectedRoute from "./routes/ProtectedRoutes";
 
@@ -22,7 +23,8 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/my-projects" element={<MyProjectsPage />} />
           <Route path="/create-quiz" element={<CreateQuiz />} />
-          <Route path="/quiz/:id" element={<Quiz />} />
+          <Route path="/quiz/play/:id" element={<Quiz />} />
+          <Route path="/quiz/edit/:id" element={<EditQuiz />} />
         </Route>
       </Routes>
     </>

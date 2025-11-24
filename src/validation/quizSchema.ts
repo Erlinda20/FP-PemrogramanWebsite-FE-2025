@@ -13,7 +13,7 @@ export const questionSchema = z.object({
     .length(4, "Each question must have 4 answers")
     .refine(
       (answers) => answers.some((a) => a.isCorrect),
-      "At least one answer must be correct",
+      "At least one answer must be correct on each question",
     ),
 });
 

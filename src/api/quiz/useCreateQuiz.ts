@@ -1,4 +1,5 @@
 import api from "@/api/axios";
+import toast from "react-hot-toast";
 
 export interface Answer {
   text: string;
@@ -68,11 +69,6 @@ export const useCreateQuiz = async (payload: QuizPayload) => {
 
     allFiles.forEach((file) => formData.append("files_to_upload", file));
 
-    console.log("===== FormData preview =====");
-    for (const pair of formData.entries()) {
-      console.log(pair[0], pair[1]);
-    }
-
     const questionsPayload: QuizQuestion[] = payload.questions.map((q) => ({
       question_text: q.questionText,
       answers: q.answers.map((a) => ({
@@ -93,6 +89,7 @@ export const useCreateQuiz = async (payload: QuizPayload) => {
     return res.data;
   } catch (err: unknown) {
     console.error("Gagal membuat quiz:", err);
+    toast.error("Gagal membuat quiz. Silakan coba lagi.");
     throw err;
   }
 };

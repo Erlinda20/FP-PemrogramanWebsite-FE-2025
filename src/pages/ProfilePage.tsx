@@ -3,15 +3,13 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useEffect, useState } from "react";
 import api from "@/api/axios";
 import toast from "react-hot-toast";
+import Navbar from "@/components/ui/layout/Navbar";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Typography } from "@/components/ui/typography";
 
-import logo from "../assets/images/logo.svg";
-import iconExplore from "../assets/images/icon-explore.svg";
-import iconMyProjects from "../assets/images/icon-myprojects.svg";
 import iconGamepad from "../assets/images/icon-gamepad.svg";
 import iconPlay from "../assets/images/icon-play.svg";
 import iconHeart from "../assets/images/icon-heart.svg";
@@ -51,42 +49,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen font-sans">
-      <nav className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-20">
-          <a href="/">
-            <img src={logo} alt="WordIT Logo" className="h-8" />
-          </a>
-          <div className="hidden md:flex items-center gap-2">
-            <Button variant="ghost" asChild>
-              <a href="/" className="flex items-center gap-2">
-                <img src={iconExplore} alt="" className="w-5 h-5" />
-                <span>Explore</span>
-              </a>
-            </Button>
-            <Button variant="ghost" asChild>
-              <a href="/my-projects" className="flex items-center gap-2">
-                <img src={iconMyProjects} alt="" className="w-5 h-5" />
-                <span>My Projects</span>
-              </a>
-            </Button>
-          </div>
-          <div className="flex items-center gap-3">
-            <Avatar className="w-9 h-9">
-              <AvatarImage
-                src={user?.profile_picture ?? undefined}
-                alt="User Avatar"
-              />
-              <AvatarFallback>
-                {user?.username?.charAt(0)?.toUpperCase() ?? "U"}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm font-medium text-slate-900">
-              {user?.username || "Username"}
-            </span>
-          </div>
-        </div>
-      </nav>
+    <div>
+      <Navbar />
 
       {user && (
         <main className="max-w-4xl mx-auto py-10 px-6">
@@ -95,7 +59,7 @@ export default function ProfilePage() {
           </div>
           <div className="flex flex-col gap-5">
             <Card>
-              <CardContent className="pt-6 flex flex-col md:flex-row items-center gap-6">
+              <CardContent className="flex flex-col md:flex-row items-center gap-6">
                 <Avatar className="w-24 h-24">
                   <AvatarImage
                     src={user?.profile_picture ?? undefined}
@@ -118,7 +82,7 @@ export default function ProfilePage() {
 
             <section className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <Card>
-                <CardContent className="pt-6 flex items-center gap-4">
+                <CardContent className="flex items-center gap-4">
                   <div className="bg-blue-100 p-3 rounded-xl">
                     <img
                       src={iconGamepad}
@@ -135,7 +99,7 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="pt-6 flex items-center gap-4">
+                <CardContent className="flex items-center gap-4">
                   <div className="bg-purple-100 p-3 rounded-xl">
                     <img src={iconPlay} alt="Total Plays" className="w-6 h-6" />
                   </div>
@@ -148,7 +112,7 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="pt-6 flex items-center gap-4">
+                <CardContent className="flex items-center gap-4">
                   <div className="bg-yellow-100 p-3 rounded-xl">
                     <img
                       src={iconHeart}

@@ -2,18 +2,20 @@ import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "@/api/axios";
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import * as Progress from "@radix-ui/react-progress";
 import { Typography } from "@/components/ui/typography";
 import { ArrowLeft, Trophy } from "lucide-react";
 
 interface Answer {
-  is_correct: boolean;
+  answer_index: number;
   answer_text: string;
 }
 
 interface Question {
   question_text: string;
   question_image: string | null;
+  question_index: number;
   answers: Answer[];
 }
 
@@ -23,62 +25,70 @@ interface QuizData {
   description: string;
   thumbnail_image: string | null;
   is_published: boolean;
-  game_json: {
-    questions: Question[];
-    score_per_question: number;
-    is_answer_randomized: boolean;
-    is_question_randomized: boolean;
-  };
+  questions: Question[];
+  score_per_question: number;
 }
 
 function Quiz() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [quiz, setQuiz] = useState<QuizData | null>(null);
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+
   const [userAnswers, setUserAnswers] = useState<
-    { question: string; answer: string; isCorrect: boolean }[]
+    { question_index: number; selected_answer_index: number }[]
   >([]);
+
   const [finished, setFinished] = useState(false);
+
+  const [result, setResult] = useState<{
+    correct_answers: number;
+    total_questions: number;
+    max_score: number;
+    score: number;
+    percentage: number;
+  } | null>(null);
 
   useEffect(() => {
     const fetchQuiz = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/api/game/game-type/quiz/${id}`);
+        const response = await api.get(
+          `/api/game/game-type/quiz/${id}/play/public`,
+        );
         setQuiz(response.data.data);
       } catch (err) {
         setError("Failed to load quiz.");
         console.error(err);
+        toast.error("Failed to load quiz.");
       } finally {
         setLoading(false);
       }
     };
+
     if (id) fetchQuiz();
   }, [id]);
 
   if (!quiz) return null;
-  const questions = quiz.game_json.questions;
+
+  const questions = quiz.questions;
   const isLastQuestion = currentQuestion === questions.length - 1;
   const isFirstQuestion = currentQuestion === 0;
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
   const handleNext = () => {
-    if (!selectedAnswer) return;
+    if (selectedAnswer === null) return;
 
-    const correctAnswer = questions[currentQuestion].answers.find(
-      (a) => a.is_correct,
-    )?.answer_text;
     setUserAnswers((prev) => [
       ...prev,
       {
-        question: questions[currentQuestion].question_text,
-        answer: selectedAnswer,
-        isCorrect: selectedAnswer === correctAnswer,
+        question_index: questions[currentQuestion].question_index,
+        selected_answer_index: selectedAnswer,
       },
     ]);
 
@@ -86,13 +96,41 @@ function Quiz() {
       setCurrentQuestion((prev) => prev + 1);
       setSelectedAnswer(null);
     } else {
-      setFinished(true);
+      submitQuiz();
     }
   };
 
-  const score = userAnswers.filter((a) => a.isCorrect).length;
+  const addPlayCount = async (gameId: string) => {
+    try {
+      await api.post("/api/game/play-count", {
+        game_id: gameId,
+      });
+    } catch (err) {
+      console.error("Failed to update play count:", err);
+      toast.error("Failed to update play count.");
+    }
+  };
 
-  if (loading) {
+  const submitQuiz = async () => {
+    try {
+      setLoading(true);
+
+      const response = await api.post(`/api/game/game-type/quiz/${id}/check`, {
+        answers: userAnswers,
+      });
+
+      setResult(response.data.data);
+      await addPlayCount(id!);
+      setFinished(true);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to submit quiz.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && !finished) {
     return (
       <div className="w-full h-screen flex justify-center items-center">
         <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-300 border-t-black"></div>
@@ -111,44 +149,49 @@ function Quiz() {
 
   const currentQ = questions[currentQuestion];
 
-  if (finished) {
-    const percentage = Math.round((score / questions.length) * 100);
-    const starCount = (score / questions.length) * 5; // bisa pecahan, misal 2.5
+  if (finished && result) {
+    const { correct_answers, total_questions, max_score, score, percentage } =
+      result;
+
+    const starCount = (percentage / 100) * 5;
     const fullStars = Math.floor(starCount);
     const halfStar = starCount - fullStars >= 0.5;
     const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
 
-    // Tentukan feedback teks
-    let feedbackText = "Good Effort!";
-    if (percentage === 100) feedbackText = "Perfect Score! Great Job!";
-    else if (percentage >= 80) feedbackText = "Great Job!";
-    else if (percentage >= 50) feedbackText = "Good Effort!";
-    else feedbackText = "Better Luck Next Time!";
+    let feedback = "Good effort!";
+    if (percentage === 100) feedback = "Perfect Score!";
+    else if (percentage >= 80) feedback = "Great job!";
+    else if (percentage >= 50) feedback = "Nice try!";
+    else feedback = "Better luck next time!";
 
     return (
       <div className="w-full h-screen flex justify-center items-center">
-        <div className="bg-white rounded-xl p-10 text-center max-w-sm w-full space-y-6 shadow-lg">
+        <div className="bg-white rounded-xl p-10 mx-10 text-center max-w-sm w-full space-y-4 shadow-lg">
           <Trophy className="mx-auto text-yellow-400" size={72} />
-          <Typography variant="h4">{feedbackText}</Typography>
+          <Typography variant="h4">{feedback}</Typography>
           <Typography variant="h2">
-            {score}/{questions.length}
+            {correct_answers}/{total_questions}
           </Typography>
-          <Typography variant="p">{percentage}%</Typography>
+          <Typography variant="p">
+            Score: {score} / {max_score}
+          </Typography>
+          <Typography variant="p">{percentage}% Accuracy</Typography>
           <div className="flex justify-center gap-1 text-yellow-400 text-xl">
-            {Array.from({ length: fullStars }).map((_, idx) => (
-              <span key={`full-${idx}`}>★</span>
+            {Array.from({ length: fullStars }).map((_, i) => (
+              <span key={i}>★</span>
             ))}
             {halfStar && <span>☆</span>}
-            {Array.from({ length: emptyStars }).map((_, idx) => (
-              <span key={`empty-${idx}`} className="text-gray-300">
+            {Array.from({ length: emptyStars }).map((_, i) => (
+              <span key={i} className="text-gray-300">
                 ★
               </span>
             ))}
           </div>
           <Button
-            className="w-full"
+            className="w-full mt-4"
             onClick={() => {
               setFinished(false);
+              setResult(null);
               setCurrentQuestion(0);
               setSelectedAnswer(null);
               setUserAnswers([]);
@@ -156,6 +199,7 @@ function Quiz() {
           >
             Play Again
           </Button>
+
           <Button
             variant="outline"
             className="w-full"
@@ -189,9 +233,6 @@ function Quiz() {
             <ArrowLeft />
           </Button>
         </div>
-        <div>
-          <Typography variant="p">Time Left: 20s</Typography>
-        </div>
       </div>
       <div className="w-full h-full p-8 flex justify-center items-center">
         <div className="max-w-3xl w-full space-y-6">
@@ -224,8 +265,7 @@ function Quiz() {
 
             <div className="grid grid-cols-1 gap-4">
               {currentQ.answers.map((opt, idx) => {
-                const letter = ["A", "B", "C", "D"][idx];
-                const isSelected = selectedAnswer === opt.answer_text;
+                const isSelected = selectedAnswer === opt.answer_index;
                 return (
                   <Button
                     key={idx}
@@ -233,7 +273,7 @@ function Quiz() {
                     className={`w-full justify-start p-7 gap-2 transition ${
                       isSelected ? "bg-primary text-white" : ""
                     }`}
-                    onClick={() => setSelectedAnswer(opt.answer_text)}
+                    onClick={() => setSelectedAnswer(opt.answer_index)}
                   >
                     <span
                       className={`w-7 h-7 rounded-full flex items-center justify-center ${
@@ -242,7 +282,7 @@ function Quiz() {
                           : "bg-gray-100 text-black"
                       }`}
                     >
-                      {letter}
+                      {String.fromCharCode(65 + idx)}
                     </span>
                     <span>{opt.answer_text}</span>
                   </Button>
@@ -264,7 +304,7 @@ function Quiz() {
                   <ArrowLeft className="mr-1" /> Previous
                 </Button>
               )}
-              <Button disabled={!selectedAnswer} onClick={handleNext}>
+              <Button onClick={handleNext} disabled={selectedAnswer === null}>
                 {isLastQuestion ? "Submit Quiz" : "Next Question"}
                 {!isLastQuestion && <ArrowLeft className="rotate-180 ml-1" />}
               </Button>
