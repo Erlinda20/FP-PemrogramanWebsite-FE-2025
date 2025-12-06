@@ -22,6 +22,7 @@ interface BackendQuestion {
   image_url: string;
   shuffled_letters: string[];
   hint_limit: number;
+  correct_word: string;
 }
 
 interface BackendGamePlayData {
@@ -73,6 +74,7 @@ const PlayAnagram = () => {
   const [showCorrect, setShowCorrect] = useState(false);
   const [showWrong, setShowWrong] = useState(false);
   const [earnedScore, setEarnedScore] = useState(0);
+  const [showError, setShowError] = useState(false);
 
   // --- LOGIC STOPWATCH ---
   useEffect(() => {
@@ -111,14 +113,13 @@ const PlayAnagram = () => {
 
       const backendData: BackendGamePlayData = result.data;
 
-      // Transform backend data to frontend format
       const transformedData: GamePlayData = {
         game_id: backendData.id,
         name: backendData.name,
         score_per_question: backendData.score_per_question || 100,
         questions: backendData.questions.map((q) => ({
           question_id: q.question_id,
-          correct_word: "", // Backend doesn't send this for security
+          correct_word: q.correct_word,
           scrambled_letters: q.shuffled_letters,
           image_url: q.image_url,
           hint_limit: q.hint_limit,
@@ -166,69 +167,45 @@ const PlayAnagram = () => {
     }
   }, [currentQuestionIndex, gameData]);
 
-  // Auto-check when all slots are filled
+  // ✅ FUNGSI VALIDASI STRICT
+  const isLetterCorrect = (letter: string, position: number): boolean => {
+    if (!gameData?.questions[currentQuestionIndex]?.correct_word) return true;
+    const correctWord = gameData.questions[currentQuestionIndex].correct_word;
+    return letter.toUpperCase() === correctWord[position].toUpperCase();
+  };
+
+  // ✅ AUTO-CHECK DAN NEXT - TANPA BACKEND
   useEffect(() => {
-    const checkAnswer = async () => {
+    const checkAnswer = () => {
       if (isChecking || showWrong || showCorrect) return;
 
       const allFilled = answerSlots.every((slot) => slot !== null);
       if (!allFilled || !gameData) return;
 
+      // Dengan strict validation, kalau semua slot terisi = PASTI BENAR!
       setIsChecking(true);
-      const userAnswer = answerSlots.join("").toLowerCase();
 
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/game/anagram/${game_id}/play/public/submit`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              question_id: gameData.questions[currentQuestionIndex].question_id,
-              answer: userAnswer,
-            }),
-          },
-        );
+      const currentQuestion = gameData.questions[currentQuestionIndex];
+      const letterCount = currentQuestion.correct_word.length;
 
-        const result = await response.json();
+      // Hitung skor: x2 per huruf (karena perfect - no hint)
+      const points = letterCount * gameData.score_per_question * 2;
 
-        if (result.data?.is_correct) {
-          const points = result.data?.score || gameData.score_per_question;
-          setEarnedScore(points);
-          setScore((prev) => prev + points);
-          setCorrectAnswers((prev) => prev + 1);
-          setShowCorrect(true);
+      setEarnedScore(points);
+      setScore((prev) => prev + points);
+      setCorrectAnswers((prev) => prev + 1);
+      setShowCorrect(true);
 
-          // Wait to show correct feedback, then move to next question
-          setTimeout(() => {
-            setShowCorrect(false);
-            if (currentQuestionIndex < gameData.questions.length - 1) {
-              setCurrentQuestionIndex((prev) => prev + 1);
-            } else {
-              // Game finished
-              setGameFinished(true);
-            }
-          }, 1500);
+      // Auto next question
+      setTimeout(() => {
+        setShowCorrect(false);
+        if (currentQuestionIndex < gameData.questions.length - 1) {
+          setCurrentQuestionIndex((prev) => prev + 1);
         } else {
-          // Wrong answer - show X and prevent further input
-          setShowWrong(true);
-
-          // Wait to show wrong feedback, then clear
-          setTimeout(() => {
-            setShowWrong(false);
-            setAnswerSlots(new Array(answerSlots.length).fill(null));
-            setAvailableLetters((prev) =>
-              prev.map((item) => ({ ...item, used: false })),
-            );
-            setIsChecking(false);
-          }, 1000);
+          // Game finished
+          setGameFinished(true);
         }
-      } catch (err) {
-        console.error("Submit error:", err);
-        setIsChecking(false);
-      }
+      }, 1500);
     };
 
     checkAnswer();
@@ -236,13 +213,12 @@ const PlayAnagram = () => {
     answerSlots,
     currentQuestionIndex,
     gameData,
-    game_id,
     isChecking,
     showWrong,
     showCorrect,
   ]);
 
-  // Keyboard support
+  // Keyboard support dengan validasi
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (isChecking || gameFinished || !gameData || showWrong || showCorrect)
@@ -250,15 +226,21 @@ const PlayAnagram = () => {
 
       const key = e.key.toUpperCase();
 
-      // Find if this letter exists in available letters and is not used
       const letterIndex = availableLetters.findIndex(
         (item) => item.letter.toUpperCase() === key && !item.used,
       );
 
       if (letterIndex !== -1) {
+        const firstEmptySlot = answerSlots.findIndex((slot) => slot === null);
+
+        if (firstEmptySlot !== -1 && !isLetterCorrect(key, firstEmptySlot)) {
+          setShowError(true);
+          setTimeout(() => setShowError(false), 500);
+          return;
+        }
+
         handleLetterClick(letterIndex);
       } else if (e.key === "Backspace") {
-        // Remove last filled slot
         let lastFilledIndex = -1;
         for (let i = answerSlots.length - 1; i >= 0; i--) {
           if (answerSlots[i] !== null) {
@@ -298,6 +280,14 @@ const PlayAnagram = () => {
       const firstEmptySlot = answerSlots.findIndex((slot) => slot === null);
       if (firstEmptySlot === -1) return;
 
+      const clickedLetter = availableLetters[index].letter;
+
+      if (!isLetterCorrect(clickedLetter, firstEmptySlot)) {
+        setShowError(true);
+        setTimeout(() => setShowError(false), 500);
+        return;
+      }
+
       const newAnswerSlots = [...answerSlots];
       newAnswerSlots[firstEmptySlot] = availableLetters[index].letter;
       setAnswerSlots(newAnswerSlots);
@@ -306,7 +296,15 @@ const PlayAnagram = () => {
       newAvailableLetters[index].used = true;
       setAvailableLetters(newAvailableLetters);
     },
-    [availableLetters, answerSlots, isChecking, showWrong, showCorrect],
+    [
+      availableLetters,
+      answerSlots,
+      isChecking,
+      showWrong,
+      showCorrect,
+      gameData,
+      currentQuestionIndex,
+    ],
   );
 
   const handleSlotClick = useCallback(
@@ -340,7 +338,6 @@ const PlayAnagram = () => {
 
       const newAnswerSlots = [...answerSlots];
       newAnswerSlots[slotIndex] = null;
-      // Shift remaining letters to the left
       for (let i = slotIndex; i < newAnswerSlots.length - 1; i++) {
         newAnswerSlots[i] = newAnswerSlots[i + 1];
       }
@@ -526,6 +523,15 @@ const PlayAnagram = () => {
           <span className="font-bold text-green-700">{score}</span>
         </div>
       </div>
+
+      {/* ERROR INDICATOR */}
+      {showError && (
+        <div className="w-full max-w-lg bg-red-100 border-2 border-red-500 rounded-lg p-3 mb-4 animate-pulse">
+          <p className="text-red-700 font-bold text-center">
+            ❌ Wrong letter for this position!
+          </p>
+        </div>
+      )}
 
       {/* MAIN CONTENT */}
       <div className="flex flex-col items-center justify-center w-full max-w-lg my-8">

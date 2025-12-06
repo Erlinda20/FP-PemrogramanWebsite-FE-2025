@@ -59,7 +59,7 @@ export default function MyProjectsPage() {
 
   const handleDeleteProject = async (projectId: string) => {
     try {
-      await api.delete(`/api/game/game-type/quiz/${projectId}`);
+      await api.delete(`/api/game/anagram/${projectId}`);
       setProjects((prev) => prev.filter((p) => p.id !== projectId));
       toast.success("Project deleted successfully!");
     } catch (err) {
@@ -73,17 +73,13 @@ export default function MyProjectsPage() {
       const form = new FormData();
       form.append("is_publish", String(isPublish));
 
-      // Kirim permintaan PATCH ke server
-      const response = await api.patch(
-        `/api/game/game-type/quiz/${gameId}`,
-        form,
-      );
+      // Kirim permintaan PATCH ke server menggunakan Axios
+      const response = await api.patch(`/api/game/anagram/${gameId}`, form);
 
-      // Cek apakah respons OK, jika tidak, log detail error
-      if (!response.ok) {
-        const result = await response.json(); // Ambil respons JSON dari server
-        console.log("Error response:", result); // Log detail error dari backend
-        throw new Error(result.message || "Failed to update status.");
+      // Cek status HTTP response untuk memastikan bahwa request berhasil
+      if (response.status !== 200) {
+        console.log("Error response:", response.data); // Cek detail error
+        throw new Error("Failed to update status.");
       }
 
       // Update status game di UI setelah berhasil
