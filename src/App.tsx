@@ -9,6 +9,9 @@ import CreateQuiz from "./pages/CreateQuiz";
 import CreateProject from "./pages/CreateProject";
 import EditQuiz from "./pages/EditQuiz";
 import Quiz from "./pages/Quiz";
+import PlayMatchingPair from "./pages/matching-pair/PlayMatchingPair";
+import CreateMatchingPair from "./pages/matching-pair/CreateMatchingPair";
+import EditMatchingPair from "./pages/matching-pair/EditMatchingPair";
 import ProtectedRoute from "./routes/ProtectedRoutes";
 
 function App() {
@@ -20,13 +23,16 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
+        <Route path="/matching-pair/play/:id" element={<PlayMatchingPair />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/my-projects" element={<MyProjectsPage />} />
           <Route path="/create-projects" element={<CreateProject />} />
           <Route path="/create-quiz" element={<CreateQuiz />} />
+          <Route path="/create-matching-pair" element={<CreateMatchingPair />} />
           <Route path="/quiz/edit/:id" element={<EditQuiz />} />
+          <Route path="/matching-pair/edit/:id" element={<EditMatchingPair />} />
         </Route>
       </Routes>
     </>

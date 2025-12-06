@@ -32,7 +32,7 @@ type Project = {
   description: string;
   thumbnail_image: string | null;
   is_published: boolean;
-  game_template: number;
+  game_template: string;
 };
 
 export default function MyProjectsPage() {
@@ -57,9 +57,14 @@ export default function MyProjectsPage() {
     fetchProjects();
   }, []);
 
-  const handleDeleteProject = async (projectId: string) => {
+  const handleDeleteProject = async (projectId: string, gameTemplate: string) => {
     try {
-      await api.delete(`/api/game/game-type/quiz/${projectId}`);
+      const endpoint = gameTemplate === "Quiz" 
+        ? `/api/game/game-type/quiz/${projectId}`
+        : gameTemplate === "Matching Pair"
+        ? `/api/game/game-type/matching-pair/${projectId}`
+        : `/api/game/game-type/quiz/${projectId}`; // fallback
+      await api.delete(endpoint);
       setProjects((prev) => prev.filter((p) => p.id !== projectId));
       toast.success("Project deleted successfully!");
     } catch (err) {
@@ -68,12 +73,17 @@ export default function MyProjectsPage() {
     }
   };
 
-  const handleUpdateStatus = async (gameId: string, isPublish: boolean) => {
+  const handleUpdateStatus = async (gameId: string, isPublish: boolean, gameTemplate: string) => {
     try {
       const form = new FormData();
-      form.append("is_publish", String(isPublish));
+      form.append("is_publish_immediately", String(isPublish));
 
-      await api.patch(`/api/game/game-type/quiz/${gameId}`, form);
+      const endpoint = gameTemplate === "Quiz" 
+        ? `/api/game/game-type/quiz/${gameId}`
+        : gameTemplate === "Matching Pair"
+        ? `/api/game/game-type/matching-pair/${gameId}`
+        : `/api/game/game-type/quiz/${gameId}`; // fallback
+      await api.patch(endpoint, form);
 
       setProjects((prev) =>
         prev.map((p) =>
@@ -185,7 +195,11 @@ export default function MyProjectsPage() {
                       size="sm"
                       className="h-7"
                       onClick={() => {
-                        navigate(`/quiz/play/${project.id}`);
+                        if (project.game_template === "Quiz") {
+                          navigate(`/quiz/play/${project.id}`);
+                        } else if (project.game_template === "Matching Pair") {
+                          navigate(`/matching-pair/play/${project.id}`);
+                        }
                       }}
                     >
                       <Play />
@@ -197,7 +211,11 @@ export default function MyProjectsPage() {
                     size="sm"
                     className="h-7"
                     onClick={() => {
-                      navigate(`/quiz/edit/${project.id}`);
+                      if (project.game_template === "Quiz") {
+                        navigate(`/quiz/edit/${project.id}`);
+                      } else if (project.game_template === "Matching Pair") {
+                        navigate(`/matching-pair/edit/${project.id}`);
+                      }
                     }}
                   >
                     <Edit />
@@ -209,7 +227,7 @@ export default function MyProjectsPage() {
                       size="sm"
                       className="h-7"
                       onClick={() => {
-                        handleUpdateStatus(project.id, false);
+                        handleUpdateStatus(project.id, false, project.game_template);
                       }}
                     >
                       <EyeOff />
@@ -221,7 +239,7 @@ export default function MyProjectsPage() {
                       size="sm"
                       className="h-7"
                       onClick={() => {
-                        handleUpdateStatus(project.id, true);
+                        handleUpdateStatus(project.id, true, project.game_template);
                       }}
                     >
                       <Eye />
@@ -255,7 +273,7 @@ export default function MyProjectsPage() {
                         <AlertDialogAction
                           className="bg-red-600 hover:bg-red-700"
                           onClick={() => {
-                            handleDeleteProject(project.id);
+                            handleDeleteProject(project.id, project.game_template);
                           }}
                         >
                           Yes, Delete

@@ -185,7 +185,13 @@ export default function HomePage() {
 
   const GameCard = ({ game }: { game: Game }) => {
     const handlePlayGame = () => {
-      window.location.href = `/quiz/play/${game.id}`;
+      if (game.game_template === "quiz") {
+        window.location.href = `/quiz/play/${game.id}`;
+      } else if (game.game_template === "matching-pair") {
+        window.location.href = `/matching-pair/play/${game.id}`;
+      } else {
+        toast.error("Game type not supported yet");
+      }
     };
 
     return (
