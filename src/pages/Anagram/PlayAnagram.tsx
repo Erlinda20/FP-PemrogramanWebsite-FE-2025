@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Clock,
@@ -74,11 +74,22 @@ const PlayAnagram = () => {
   const [earnedScore, setEarnedScore] = useState(0);
   const [showError, setShowError] = useState(false);
 
+  // Track which questions have been answered (by question_id)
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(
+    new Set(),
+  );
+
+  // Prevent double fetch in React Strict Mode
+  const hasFetchedRef = useRef(false);
+
+  // Track previous question index to prevent unnecessary re-initialization
+  const prevQuestionIndexRef = useRef<number>(-1);
+
   // --- LOGIC STOPWATCH ---
   useEffect(() => {
     if (!isLoading && !gameFinished) {
       const timer = setInterval(() => {
-        setTimeElapsed((prevTime) => prevTime + 1);
+        setTimeElapsed((prevTime: number) => prevTime + 1);
       }, 1000);
       return () => clearInterval(timer);
     }
@@ -137,9 +148,10 @@ const PlayAnagram = () => {
   };
 
   useEffect(() => {
-    if (game_id) {
+    if (game_id && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
       fetchGameData(game_id);
-    } else {
+    } else if (!game_id) {
       setError("Game ID not found in URL.");
       setIsLoading(false);
     }
@@ -148,56 +160,119 @@ const PlayAnagram = () => {
   // Initialize letters when question changes
   useEffect(() => {
     if (gameData && gameData.questions[currentQuestionIndex]) {
+      // Only initialize if question index actually changed
+      if (prevQuestionIndexRef.current === currentQuestionIndex) {
+        return;
+      }
+
+      prevQuestionIndexRef.current = currentQuestionIndex;
       const currentQuestion = gameData.questions[currentQuestionIndex];
-      const letters = currentQuestion.scrambled_letters.map((letter) => ({
-        letter,
-        used: false,
-      }));
-      setAvailableLetters(letters);
-      setAnswerSlots(
-        new Array(currentQuestion.scrambled_letters.length).fill(null),
+
+      // Check if this question was already answered
+      const isAlreadyAnswered = answeredQuestions.has(
+        currentQuestion.question_id,
       );
+
+      if (isAlreadyAnswered) {
+        // If already answered, show the correct answer filled in and disable interaction
+        const correctWordNoSpaces = currentQuestion.correct_word.replace(
+          /\s/g,
+          "",
+        );
+        setAnswerSlots(correctWordNoSpaces.split(""));
+        setAvailableLetters([]);
+      } else {
+        // Filter out spaces from scrambled letters
+        const lettersNoSpaces = currentQuestion.scrambled_letters.filter(
+          (letter: string) => letter !== " ",
+        );
+        const letters = lettersNoSpaces.map((letter: string) => ({
+          letter,
+          used: false,
+        }));
+        setAvailableLetters(letters);
+        setAnswerSlots(
+          new Array(lettersNoSpaces.length).fill(null) as (string | null)[],
+        );
+      }
+
       setIsChecking(false);
       setShowCorrect(false);
       setShowWrong(false);
       setEarnedScore(0);
     }
-  }, [currentQuestionIndex, gameData]);
+  }, [currentQuestionIndex, gameData, answeredQuestions]);
 
-  // ✅ FUNGSI VALIDASI STRICT
-  const isLetterCorrect = (letter: string, position: number): boolean => {
-    if (!gameData?.questions[currentQuestionIndex]?.correct_word) return true;
-    const correctWord = gameData.questions[currentQuestionIndex].correct_word;
-    return letter.toUpperCase() === correctWord[position].toUpperCase();
-  };
+  // ✅ FUNGSI VALIDASI STRICT (filter spaces)
+  const isLetterCorrect = useCallback(
+    (letter: string, position: number): boolean => {
+      if (!gameData?.questions[currentQuestionIndex]?.correct_word) return true;
+      const correctWordNoSpaces = gameData.questions[
+        currentQuestionIndex
+      ].correct_word.replace(/\s/g, "");
+      return (
+        letter.toUpperCase() === correctWordNoSpaces[position].toUpperCase()
+      );
+    },
+    [gameData, currentQuestionIndex],
+  );
 
-  // ✅ AUTO-CHECK DAN NEXT - TANPA BACKEND
+  // Track if user made any mistakes during this question
+  const [hadWrongInput, setHadWrongInput] = useState(false);
+
+  // ✅ AUTO-CHECK DAN NEXT - DENGAN SCORING YANG BENAR
   useEffect(() => {
     const checkAnswer = () => {
-      if (isChecking || showWrong || showCorrect) return;
+      // FIRST: Check if already answered (prevent re-checking)
+      if (!gameData || !gameData.questions[currentQuestionIndex]) {
+        return;
+      }
+      const currentQuestion = gameData.questions[currentQuestionIndex];
 
-      const allFilled = answerSlots.every((slot) => slot !== null);
-      if (!allFilled || !gameData) return;
+      if (answeredQuestions.has(currentQuestion.question_id)) {
+        return;
+      }
 
-      // Dengan strict validation, kalau semua slot terisi = PASTI BENAR!
+      // Then check other conditions
+      if (isChecking || showWrong || showCorrect) {
+        return;
+      }
+
+      const allFilled =
+        answerSlots.length > 0 && answerSlots.every((slot) => slot !== null);
+      if (!allFilled) return;
+
       setIsChecking(true);
 
-      const currentQuestion = gameData.questions[currentQuestionIndex];
-      const letterCount = currentQuestion.correct_word.length;
+      // Filter spaces from correct word for accurate letter count
+      const correctWordNoSpaces = currentQuestion.correct_word.replace(
+        /\s/g,
+        "",
+      );
+      const letterCount = correctWordNoSpaces.length;
 
-      // Hitung skor: x2 per huruf (karena perfect - no hint)
-      const points = letterCount * 2;
+      // Calculate score based on whether user made mistakes
+      // Perfect: letterCount × 2
+      // Wrong input: letterCount × 1
+      const multiplier = hadWrongInput ? 1 : 2;
+      const points = letterCount * multiplier;
 
       setEarnedScore(points);
-      setScore((prev) => prev + points);
-      setCorrectAnswers((prev) => prev + 1);
+      setScore((prev: number) => prev + points);
+      setCorrectAnswers((prev: number) => prev + 1);
       setShowCorrect(true);
+
+      // Mark this question as answered
+      setAnsweredQuestions((prev) =>
+        new Set(prev).add(currentQuestion.question_id),
+      );
 
       // Auto next question
       setTimeout(() => {
         setShowCorrect(false);
+        setHadWrongInput(false); // Reset for next question
         if (currentQuestionIndex < gameData.questions.length - 1) {
-          setCurrentQuestionIndex((prev) => prev + 1);
+          setCurrentQuestionIndex((prev: number) => prev + 1);
         } else {
           // Game finished
           setGameFinished(true);
@@ -213,7 +288,94 @@ const PlayAnagram = () => {
     isChecking,
     showWrong,
     showCorrect,
+    hadWrongInput,
   ]);
+
+  // --- HANDLERS (Dipindahkan ke atas sebelum keyboard handler) ---
+  const handleLetterClick = useCallback(
+    (index: number) => {
+      if (
+        availableLetters[index].used ||
+        isChecking ||
+        showWrong ||
+        showCorrect
+      )
+        return;
+
+      const firstEmptySlot = answerSlots.findIndex(
+        (slot: string | null) => slot === null,
+      );
+      if (firstEmptySlot === -1) return;
+
+      const clickedLetter = availableLetters[index].letter;
+
+      if (!isLetterCorrect(clickedLetter, firstEmptySlot)) {
+        setShowError(true);
+        setHadWrongInput(true); // Mark that user made a mistake
+        setTimeout(() => setShowError(false), 500);
+        return;
+      }
+
+      const newAnswerSlots = [...answerSlots];
+      newAnswerSlots[firstEmptySlot] = availableLetters[index].letter;
+      setAnswerSlots(newAnswerSlots);
+
+      const newAvailableLetters = [...availableLetters];
+      newAvailableLetters[index].used = true;
+      setAvailableLetters(newAvailableLetters);
+    },
+    [
+      availableLetters,
+      answerSlots,
+      isChecking,
+      showWrong,
+      showCorrect,
+      isLetterCorrect,
+    ],
+  );
+
+  const handleSlotClick = useCallback(
+    (slotIndex: number) => {
+      if (
+        answerSlots[slotIndex] === null ||
+        isChecking ||
+        showWrong ||
+        showCorrect
+      )
+        return;
+
+      const letterToRemove = answerSlots[slotIndex];
+      const letterIndex = availableLetters.findIndex(
+        (item: { letter: string; used: boolean }, idx: number) =>
+          item.letter === letterToRemove &&
+          item.used &&
+          availableLetters
+            .slice(0, idx + 1)
+            .filter(
+              (l: { letter: string; used: boolean }) =>
+                l.letter === letterToRemove && l.used,
+            ).length ===
+          answerSlots
+            .slice(0, slotIndex + 1)
+            .filter((s: string | null) => s === letterToRemove).length,
+      );
+
+      if (letterIndex !== -1) {
+        const newAvailableLetters = [...availableLetters];
+        newAvailableLetters[letterIndex].used = false;
+        setAvailableLetters(newAvailableLetters);
+      }
+
+      const newAnswerSlots = [...answerSlots];
+      newAnswerSlots[slotIndex] = null;
+      for (let i = slotIndex; i < newAnswerSlots.length - 1; i++) {
+        newAnswerSlots[i] = newAnswerSlots[i + 1];
+      }
+      newAnswerSlots[newAnswerSlots.length - 1] = null;
+      setAnswerSlots(newAnswerSlots);
+    },
+    [answerSlots, availableLetters, isChecking, showWrong, showCorrect],
+  );
 
   // Keyboard support dengan validasi
   useEffect(() => {
@@ -224,14 +386,18 @@ const PlayAnagram = () => {
       const key = e.key.toUpperCase();
 
       const letterIndex = availableLetters.findIndex(
-        (item) => item.letter.toUpperCase() === key && !item.used,
+        (item: { letter: string; used: boolean }) =>
+          item.letter.toUpperCase() === key && !item.used,
       );
 
       if (letterIndex !== -1) {
-        const firstEmptySlot = answerSlots.findIndex((slot) => slot === null);
+        const firstEmptySlot = answerSlots.findIndex(
+          (slot: string | null) => slot === null,
+        );
 
         if (firstEmptySlot !== -1 && !isLetterCorrect(key, firstEmptySlot)) {
           setShowError(true);
+          setHadWrongInput(true); // Mark that user made a mistake
           setTimeout(() => setShowError(false), 500);
           return;
         }
@@ -261,92 +427,14 @@ const PlayAnagram = () => {
     gameData,
     showWrong,
     showCorrect,
+    isLetterCorrect,
+    handleLetterClick,
+    handleSlotClick,
   ]);
-
-  // --- HANDLERS ---
-  const handleLetterClick = useCallback(
-    (index: number) => {
-      if (
-        availableLetters[index].used ||
-        isChecking ||
-        showWrong ||
-        showCorrect
-      )
-        return;
-
-      const firstEmptySlot = answerSlots.findIndex((slot) => slot === null);
-      if (firstEmptySlot === -1) return;
-
-      const clickedLetter = availableLetters[index].letter;
-
-      if (!isLetterCorrect(clickedLetter, firstEmptySlot)) {
-        setShowError(true);
-        setTimeout(() => setShowError(false), 500);
-        return;
-      }
-
-      const newAnswerSlots = [...answerSlots];
-      newAnswerSlots[firstEmptySlot] = availableLetters[index].letter;
-      setAnswerSlots(newAnswerSlots);
-
-      const newAvailableLetters = [...availableLetters];
-      newAvailableLetters[index].used = true;
-      setAvailableLetters(newAvailableLetters);
-    },
-    [
-      availableLetters,
-      answerSlots,
-      isChecking,
-      showWrong,
-      showCorrect,
-      gameData,
-      currentQuestionIndex,
-    ],
-  );
-
-  const handleSlotClick = useCallback(
-    (slotIndex: number) => {
-      if (
-        answerSlots[slotIndex] === null ||
-        isChecking ||
-        showWrong ||
-        showCorrect
-      )
-        return;
-
-      const letterToRemove = answerSlots[slotIndex];
-      const letterIndex = availableLetters.findIndex(
-        (item, idx) =>
-          item.letter === letterToRemove &&
-          item.used &&
-          availableLetters
-            .slice(0, idx + 1)
-            .filter((l) => l.letter === letterToRemove && l.used).length ===
-            answerSlots
-              .slice(0, slotIndex + 1)
-              .filter((s) => s === letterToRemove).length,
-      );
-
-      if (letterIndex !== -1) {
-        const newAvailableLetters = [...availableLetters];
-        newAvailableLetters[letterIndex].used = false;
-        setAvailableLetters(newAvailableLetters);
-      }
-
-      const newAnswerSlots = [...answerSlots];
-      newAnswerSlots[slotIndex] = null;
-      for (let i = slotIndex; i < newAnswerSlots.length - 1; i++) {
-        newAnswerSlots[i] = newAnswerSlots[i + 1];
-      }
-      newAnswerSlots[newAnswerSlots.length - 1] = null;
-      setAnswerSlots(newAnswerSlots);
-    },
-    [answerSlots, availableLetters, isChecking, showWrong, showCorrect],
-  );
 
   const handlePrevQuestion = () => {
     if (currentQuestionIndex > 0 && !isChecking && !showWrong && !showCorrect) {
-      setCurrentQuestionIndex((prevIndex) => prevIndex - 1);
+      setCurrentQuestionIndex((prevIndex: number) => prevIndex - 1);
     }
   };
 
@@ -357,7 +445,7 @@ const PlayAnagram = () => {
       !showWrong &&
       !showCorrect
     ) {
-      setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
+      setCurrentQuestionIndex((prevIndex: number) => prevIndex + 1);
     }
   };
 
@@ -380,6 +468,8 @@ const PlayAnagram = () => {
     setIsChecking(false);
     setShowCorrect(false);
     setShowWrong(false);
+    setAnsweredQuestions(new Set());
+    setHadWrongInput(false);
   };
 
   // --- RENDER DATA DINAMIS ---
@@ -530,6 +620,16 @@ const PlayAnagram = () => {
         </div>
       )}
 
+      {/* ALREADY ANSWERED INDICATOR */}
+      {currentQuestion &&
+        answeredQuestions.has(currentQuestion.question_id) && (
+          <div className="w-full max-w-lg bg-green-100 border-2 border-green-500 rounded-lg p-3 mb-4">
+            <p className="text-green-700 font-bold text-center">
+              ✅ This question has been answered!
+            </p>
+          </div>
+        )}
+
       {/* MAIN CONTENT */}
       <div className="flex flex-col items-center justify-center w-full max-w-lg my-8">
         {/* Gambar Hint */}
@@ -552,15 +652,14 @@ const PlayAnagram = () => {
             <div
               key={`slot-${i}`}
               onClick={() => handleSlotClick(i)}
-              className={`w-14 h-14 rounded-lg flex items-center justify-center font-bold text-2xl transition-all ${
-                letter
+              className={`w-14 h-14 rounded-lg flex items-center justify-center font-bold text-2xl transition-all ${letter
                   ? showWrong
                     ? "bg-red-500 text-white shadow-md"
                     : showCorrect
                       ? "bg-green-500 text-white shadow-md"
                       : "bg-blue-500 text-white shadow-md hover:bg-blue-600 cursor-pointer"
                   : "border-4 border-dashed border-slate-300 bg-white"
-              }`}
+                }`}
             >
               {letter || ""}
             </div>
@@ -574,11 +673,10 @@ const PlayAnagram = () => {
               key={`scramble-${i}`}
               onClick={() => handleLetterClick(i)}
               disabled={item.used || isChecking || showWrong || showCorrect}
-              className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-2xl shadow-lg transition-all ${
-                item.used || showWrong || showCorrect
+              className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-2xl shadow-lg transition-all ${item.used || showWrong || showCorrect
                   ? "bg-slate-300 text-slate-400 cursor-not-allowed opacity-50"
                   : "bg-slate-700 text-white hover:bg-slate-800 hover:scale-110 cursor-pointer active:scale-95"
-              }`}
+                }`}
             >
               {item.letter}
             </button>

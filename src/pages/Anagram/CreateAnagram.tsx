@@ -128,6 +128,7 @@ const CreateAnagram = () => {
         "is_publish_immediately",
         gameInfo.is_publish_immediately.toString(),
       );
+      formData.append("score_per_question", "10");
       formData.append(
         "is_question_randomized",
         gameInfo.is_question_randomized.toString(),
