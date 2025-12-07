@@ -103,20 +103,31 @@ export default function HomePage() {
         const response = await api.get(url);
         console.log("Fetched games data:", response.data);
 
-        setGames(
-          response.data.data.map(
-            (g: Game) =>
-              ({
-                ...g,
-                total_liked: g.total_liked || 0,
-                total_played: g.total_played || 0,
-                is_liked: g.is_liked || false,
-              }) as Game,
-          ),
-        );
+        // Check if response has valid data structure
+        if (
+          response.data &&
+          response.data.data &&
+          Array.isArray(response.data.data)
+        ) {
+          setGames(
+            response.data.data.map(
+              (g: Game) =>
+                ({
+                  ...g,
+                  total_liked: g.total_liked || 0,
+                  total_played: g.total_played || 0,
+                  is_liked: g.is_liked || false,
+                }) as Game,
+            ),
+          );
+        } else {
+          console.warn("Invalid response structure:", response.data);
+          setGames([]);
+        }
       } catch (err) {
         setError("Failed to fetch games. Please try again later.");
         console.error("Fetch error:", err);
+        setGames([]);
       } finally {
         if (initialLoading) {
           setInitialLoading(false);

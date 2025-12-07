@@ -7,10 +7,10 @@ export const mazeChaseAnswerSchema = z.object({
 
 export const mazeChaseQuestionSchema = z.object({
   questionText: z.string().min(3, "Question text too short"),
-  questionImages: z.union([z.instanceof(File), z.null()]),
   answers: z
     .array(mazeChaseAnswerSchema)
-    .length(4, "Each question must have 4 answers")
+    .min(2, "Each question must have at least 2 answers")
+    .max(4, "Each question can have at most 4 answers")
     .refine(
       (answers) => answers.some((a) => a.isCorrect),
       "At least one answer must be correct on each question",
@@ -29,7 +29,10 @@ export const mazeChaseSchema = z.object({
   settings: z.object({
     isQuestionRandomized: z.boolean(),
     isAnswerRandomized: z.boolean(),
-    countdownMinutes: z.number().min(1, "Countdown must be at least 1 minute").max(60, "Countdown cannot exceed 60 minutes"),
+    countdownMinutes: z
+      .number()
+      .min(1, "Countdown must be at least 1 minute")
+      .max(60, "Countdown cannot exceed 60 minutes"),
   }),
 });
 

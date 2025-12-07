@@ -25,14 +25,18 @@ function App() {
         <Route path="/quiz/play/:id" element={<Quiz />} />
         {/* <Route path="/maze-chase/play/:id" element={<MazeChase />} /> */}
 
+        {/* Test Routes for Maze Chase - Remove after testing */}
+        <Route path="/test/create-maze-chase" element={<CreateMazeChase />} />
+        <Route path="/test/maze-chase/edit/:id" element={<EditMazeChase />} />
+
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/my-projects" element={<MyProjectsPage />} />
           <Route path="/create-projects" element={<CreateProject />} />
           <Route path="/create-quiz" element={<CreateQuiz />} />
           <Route path="/quiz/edit/:id" element={<EditQuiz />} />
-          <Route path="/create-maze-chase" element={<CreateMazeChase/>} />
-          <Route path="/maze-chase/edit" element={<EditMazeChase/>} />
+          <Route path="/create-maze-chase" element={<CreateMazeChase />} />
+          <Route path="/maze-chase/edit/:id" element={<EditMazeChase />} />
         </Route>
       </Routes>
     </>

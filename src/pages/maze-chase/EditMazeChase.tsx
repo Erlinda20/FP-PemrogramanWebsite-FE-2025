@@ -11,7 +11,15 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import Dropzone from "@/components/ui/dropzone";
 import { Typography } from "@/components/ui/typography";
-import { ArrowLeft, Plus, SaveIcon, Trash2, X, ChevronDown, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  SaveIcon,
+  Trash2,
+  X,
+  ChevronDown,
+  Sparkles,
+} from "lucide-react";
 import { AVAILABLE_MAPS } from "@/assets/maze-chase/maps";
 import backgroundImage from "@/assets/maze-chase/backgroundcreate.jpg";
 import {
@@ -141,7 +149,7 @@ function EditMazeChase() {
                   questionImages: null,
                   answers: Array(4).fill({ text: "", isCorrect: false }),
                 },
-              ]
+              ],
         );
 
         setSettings({
@@ -190,7 +198,11 @@ function EditMazeChase() {
     );
   };
 
-  const handleAnswerChange = (qIndex: number, aIndex: number, value: string) => {
+  const handleAnswerChange = (
+    qIndex: number,
+    aIndex: number,
+    value: string,
+  ) => {
     const newAnswers = [...questions[qIndex].answers];
     newAnswers[aIndex] = { ...newAnswers[aIndex], text: value };
     updateQuestion(qIndex, { answers: newAnswers });
@@ -211,10 +223,6 @@ function EditMazeChase() {
   const handleThumbnailChange = (file: File | null) => {
     setThumbnail(file);
     if (file) setThumbnailPreview(URL.createObjectURL(file));
-  };
-
-  const handleQuestionImageChange = (qIndex: number, file: File | null) => {
-    updateQuestion(qIndex, { questionImages: file });
   };
 
   const handleSaveDraft = () => {
@@ -240,7 +248,10 @@ function EditMazeChase() {
   // --- Submit Handler ---
   const handleSubmit = async () => {
     if (!thumbnail && !thumbnailPreview) {
-      setFormErrors((prev) => ({ ...prev, thumbnail: "Thumbnail is required" }));
+      setFormErrors((prev) => ({
+        ...prev,
+        thumbnail: "Thumbnail is required",
+      }));
       return toast.error("Thumbnail is required");
     }
     if (!mapId) {
@@ -255,7 +266,8 @@ function EditMazeChase() {
       mapId,
       questions: questions.map((q) => ({
         questionText: q.questionText,
-        questionImages: q.questionImages instanceof File ? q.questionImages : null,
+        questionImages:
+          q.questionImages instanceof File ? q.questionImages : null,
         answers: q.answers.map((a) => ({
           text: a.text,
           isCorrect: a.isCorrect,
@@ -292,12 +304,20 @@ function EditMazeChase() {
       formData.append("thumbnail_image", thumbnail);
     }
 
-    formData.append("is_question_randomized", String(settings.isQuestionRandomized));
-    formData.append("is_answer_randomized", String(settings.isAnswerRandomized));
+    formData.append(
+      "is_question_randomized",
+      String(settings.isQuestionRandomized),
+    );
+    formData.append(
+      "is_answer_randomized",
+      String(settings.isAnswerRandomized),
+    );
     formData.append("countdown_minutes", String(settings.countdownMinutes));
 
     const filesToUpload: File[] = [];
-    const questionImageFileIndex: (number | string | undefined)[] = new Array(questions.length);
+    const questionImageFileIndex: (number | string | undefined)[] = new Array(
+      questions.length,
+    );
 
     questions.forEach((q, qi) => {
       if (q.questionImages instanceof File) {
@@ -348,20 +368,22 @@ function EditMazeChase() {
 
   if (loading) {
     return (
-      <div 
+      <div
         className="w-full h-screen flex justify-center items-center bg-cover bg-fixed bg-center"
         style={{ backgroundImage: `url(${backgroundImage})` }}
       >
         <div className="backdrop-blur-2xl bg-black/60 p-8 rounded-2xl shadow-2xl flex flex-col items-center border border-gray-700/50">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-700 border-t-[#c9a961]"></div>
-          <p className="mt-4 font-gothic text-xl text-[#c9a961]">Loading Labyrinth...</p>
+          <p className="mt-4 font-gothic text-xl text-[#c9a961]">
+            Loading Labyrinth...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div 
+    <div
       className="w-full min-h-screen bg-cover bg-fixed bg-center text-gray-300 relative"
       style={{
         backgroundImage: `url(${backgroundImage})`,
@@ -394,7 +416,7 @@ function EditMazeChase() {
               Maze Chase
             </h1>
             <div className="flex items-center gap-8">
-              <button 
+              <button
                 onClick={() => navigate("/my-projects")}
                 className="font-body text-gray-400 hover:text-[#c9a961] transition-colors duration-300 text-sm"
               >
@@ -427,7 +449,7 @@ function EditMazeChase() {
               <h2 className="font-gothic text-3xl text-[#c9a961] mb-8 tracking-wide">
                 Game Configuration
               </h2>
-              
+
               <div className="space-y-8">
                 <div className="space-y-3">
                   <Label className="text-gray-400 font-medium text-base">
@@ -476,12 +498,13 @@ function EditMazeChase() {
                     >
                       <span>
                         {mapId
-                          ? AVAILABLE_MAPS.find((m) => m.id === mapId)?.name || "Select a map"
+                          ? AVAILABLE_MAPS.find((m) => m.id === mapId)?.name ||
+                            "Select a map"
                           : "Choose your labyrinth..."}
                       </span>
-                      <ChevronDown 
-                        size={20} 
-                        className={`text-[#c9a961] transition-transform duration-300 ${showMapDropdown ? 'rotate-180' : ''}`} 
+                      <ChevronDown
+                        size={20}
+                        className={`text-[#c9a961] transition-transform duration-300 ${showMapDropdown ? "rotate-180" : ""}`}
                       />
                     </button>
 
@@ -511,16 +534,21 @@ function EditMazeChase() {
                                 {mapId === map.id && (
                                   <div className="absolute inset-0 bg-[#c9a961]/20 flex items-center justify-center">
                                     <div className="bg-black/70 rounded-full p-2 backdrop-blur-sm">
-                                      <Sparkles size={20} className="text-[#c9a961]" />
+                                      <Sparkles
+                                        size={20}
+                                        className="text-[#c9a961]"
+                                      />
                                     </div>
                                   </div>
                                 )}
                               </div>
-                              <div className={`p-3 text-center font-medium text-sm transition-colors ${
-                                mapId === map.id
-                                  ? "bg-[#c9a961]/20 text-[#c9a961]"
-                                  : "bg-black/40 text-gray-400 group-hover:bg-[#c9a961]/10"
-                              }`}>
+                              <div
+                                className={`p-3 text-center font-medium text-sm transition-colors ${
+                                  mapId === map.id
+                                    ? "bg-[#c9a961]/20 text-[#c9a961]"
+                                    : "bg-black/40 text-gray-400 group-hover:bg-[#c9a961]/10"
+                                }`}
+                              >
                                 {map.name}
                               </div>
                             </button>
@@ -559,16 +587,21 @@ function EditMazeChase() {
           <div className="flex justify-between items-center mt-10 mb-6 backdrop-blur-xl bg-black/50 rounded-2xl p-6 border border-gray-700/30">
             <div className="flex items-center gap-4">
               <div className="bg-gradient-to-br from-[#c9a961] to-[#a08347] p-3 rounded-xl shadow-lg">
-                <Typography variant="p" className="text-gray-900 font-bold text-sm">
+                <Typography
+                  variant="p"
+                  className="text-gray-900 font-bold text-sm"
+                >
                   {questions.length}
                 </Typography>
               </div>
               <div>
-                <h3 className="font-gothic text-2xl text-[#c9a961] tracking-wide">Challenges</h3>
+                <h3 className="font-gothic text-2xl text-[#c9a961] tracking-wide">
+                  Challenges
+                </h3>
                 <p className="text-gray-500 text-sm">Maximum 10 questions</p>
               </div>
             </div>
-            <Button 
+            <Button
               onClick={addQuestion}
               disabled={questions.length >= 10}
               className="bg-gradient-to-r from-[#c9a961] to-[#a08347] hover:from-[#a08347] hover:to-[#c9a961] text-gray-900 font-semibold px-6 py-3 rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -589,7 +622,10 @@ function EditMazeChase() {
                     <div className="bg-gradient-to-br from-[#c9a961] to-[#a08347] text-gray-900 font-bold px-4 py-2 rounded-xl shadow-lg">
                       Q{qIndex + 1}
                     </div>
-                    <Typography variant="p" className="text-gray-300 font-semibold">
+                    <Typography
+                      variant="p"
+                      className="text-gray-300 font-semibold"
+                    >
                       Challenge {qIndex + 1}
                     </Typography>
                   </div>
@@ -615,11 +651,14 @@ function EditMazeChase() {
                     className="w-full bg-black/70 border border-gray-700/50 text-gray-300 rounded-xl px-4 py-4 placeholder:text-gray-600 focus:border-[#c9a961]/50 transition-all resize-none"
                     rows={3}
                     value={q.questionText}
-                    onChange={(e) => handleQuestionTextChange(qIndex, e.target.value)}
+                    onChange={(e) =>
+                      handleQuestionTextChange(qIndex, e.target.value)
+                    }
                   />
                   {formErrors[`questions.${qIndex}.questionText`] && (
                     <p className="text-red-400 text-sm flex items-center gap-1">
-                      <span>⚠</span> {formErrors[`questions.${qIndex}.questionText`]}
+                      <span>⚠</span>{" "}
+                      {formErrors[`questions.${qIndex}.questionText`]}
                     </p>
                   )}
                 </div>
@@ -627,7 +666,9 @@ function EditMazeChase() {
                 <div className="space-y-4 bg-black/40 p-6 rounded-2xl border border-gray-700/30">
                   <Label className="text-gray-400 font-medium flex items-center gap-2">
                     Answer Options <span className="text-[#c9a961]">*</span>
-                    <span className="text-xs text-gray-600">(Mark the correct answer)</span>
+                    <span className="text-xs text-gray-600">
+                      (Mark the correct answer)
+                    </span>
                   </Label>
                   <div className="space-y-3">
                     {q.answers.map((a, aIndex) => (
@@ -636,11 +677,17 @@ function EditMazeChase() {
                           placeholder={`Option ${aIndex + 1}...`}
                           className="flex-1 bg-black/70 border-gray-700/50 text-gray-300 rounded-xl px-4 py-3 placeholder:text-gray-600 focus:border-[#c9a961]/50"
                           value={a.text}
-                          onChange={(e) => handleAnswerChange(qIndex, aIndex, e.target.value)}
+                          onChange={(e) =>
+                            handleAnswerChange(qIndex, aIndex, e.target.value)
+                          }
                         />
                         <RadioGroup
-                          value={q.answers.findIndex((a) => a.isCorrect).toString()}
-                          onValueChange={(val) => handleCorrectAnswer(qIndex, Number(val))}
+                          value={q.answers
+                            .findIndex((a) => a.isCorrect)
+                            .toString()}
+                          onValueChange={(val: string) =>
+                            handleCorrectAnswer(qIndex, Number(val))
+                          }
                         >
                           <div className="flex items-center gap-2 bg-black/50 px-4 py-3 rounded-xl border border-gray-700/30">
                             <RadioGroupItem value={aIndex.toString()} />
@@ -661,45 +708,63 @@ function EditMazeChase() {
           <div className="backdrop-blur-2xl bg-black/60 rounded-3xl border border-gray-700/50 shadow-[0_8px_32px_0_rgba(0,0,0,0.8)] p-10 space-y-8 mt-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-gradient-to-br from-[#c9a961] to-[#a08347] p-2.5 rounded-xl shadow-lg">
-                <Typography variant="p" className="text-gray-900 font-bold text-lg">⚙️</Typography>
+                <Typography
+                  variant="p"
+                  className="text-gray-900 font-bold text-lg"
+                >
+                  ⚙️
+                </Typography>
               </div>
-              <h3 className="font-gothic text-3xl text-[#c9a961] tracking-wide">Game Settings</h3>
+              <h3 className="font-gothic text-3xl text-[#c9a961] tracking-wide">
+                Game Settings
+              </h3>
             </div>
 
             <div className="space-y-6">
               <div className="flex justify-between items-center p-5 bg-black/40 rounded-2xl hover:bg-black/50 transition-all border border-gray-700/30">
                 <div>
-                  <Label className="text-gray-300 font-semibold text-base">Shuffle Questions</Label>
+                  <Label className="text-gray-300 font-semibold text-base">
+                    Shuffle Questions
+                  </Label>
                   <Typography variant="small" className="text-gray-500 mt-1">
                     Randomize challenge order
                   </Typography>
                 </div>
                 <Switch
                   checked={settings.isQuestionRandomized}
-                  onCheckedChange={(val) =>
-                    setSettings((prev) => ({ ...prev, isQuestionRandomized: val }))
+                  onCheckedChange={(val: boolean) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      isQuestionRandomized: val,
+                    }))
                   }
                 />
               </div>
 
               <div className="flex justify-between items-center p-5 bg-black/40 rounded-2xl hover:bg-black/50 transition-all border border-gray-700/30">
                 <div>
-                  <Label className="text-gray-300 font-semibold text-base">Shuffle Answers</Label>
+                  <Label className="text-gray-300 font-semibold text-base">
+                    Shuffle Answers
+                  </Label>
                   <Typography variant="small" className="text-gray-500 mt-1">
                     Randomize answer options
                   </Typography>
                 </div>
                 <Switch
                   checked={settings.isAnswerRandomized}
-                  onCheckedChange={(val) =>
-                    setSettings((prev) => ({ ...prev, isAnswerRandomized: val }))
+                  onCheckedChange={(val: boolean) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      isAnswerRandomized: val,
+                    }))
                   }
                 />
               </div>
 
               <div className="space-y-3">
                 <Label className="text-gray-400 font-medium text-base">
-                  Countdown Timer (Minutes) <span className="text-[#c9a961]">*</span>
+                  Countdown Timer (Minutes){" "}
+                  <span className="text-[#c9a961]">*</span>
                 </Label>
                 <Input
                   type="number"
@@ -709,13 +774,16 @@ function EditMazeChase() {
                   onChange={(e) => {
                     const val = Number(e.target.value);
                     if (val >= 1 && val <= 60) {
-                      setSettings((prev) => ({ ...prev, countdownMinutes: val }));
+                      setSettings((prev) => ({
+                        ...prev,
+                        countdownMinutes: val,
+                      }));
                     }
                   }}
                 />
                 <Typography variant="small" className="text-gray-500">
                   Set between 1-60 minutes
-                </Typography>   
+                </Typography>
                 {formErrors["settings.countdownMinutes"] && (
                   <p className="text-red-400 text-sm flex items-center gap-1">
                     <span>⚠</span> {formErrors["settings.countdownMinutes"]}
@@ -729,7 +797,7 @@ function EditMazeChase() {
           <div className="flex flex-col sm:flex-row gap-4 justify-end mt-10">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button 
+                <Button
                   size="lg"
                   className="border-2 border-gray-700 text-gray-400 bg-black/50 hover:bg-black/70 hover:text-gray-300 backdrop-blur-xl transition-all rounded-xl font-semibold px-8 py-6"
                 >
@@ -742,7 +810,8 @@ function EditMazeChase() {
                     Abandon Changes?
                   </AlertDialogTitle>
                   <AlertDialogDescription className="text-gray-400 text-base">
-                    All unsaved modifications will be lost to the shadows. Are you certain?
+                    All unsaved modifications will be lost to the shadows. Are
+                    you certain?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
