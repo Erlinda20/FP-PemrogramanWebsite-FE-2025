@@ -21,26 +21,6 @@ export interface DropFeedback {
   isCorrect: boolean;
 }
 
-// Constants
-export const mockCategories: Category[] = [
-  { id: "colors", name: "Colours", color: "bg-blue-600" },
-  { id: "numbers", name: "Numbers", color: "bg-green-600" },
-  { id: "family", name: "Family", color: "bg-purple-600" },
-];
-
-export const mockWords: WordItem[] = [
-  { id: "1", text: "seven", correctCategory: "numbers" },
-  { id: "2", text: "two", correctCategory: "numbers" },
-  { id: "3", text: "eleven", correctCategory: "numbers" },
-  { id: "4", text: "four", correctCategory: "numbers" },
-  { id: "5", text: "red", correctCategory: "colors" },
-  { id: "6", text: "blue", correctCategory: "colors" },
-  { id: "7", text: "green", correctCategory: "colors" },
-  { id: "8", text: "mother", correctCategory: "family" },
-  { id: "9", text: "father", correctCategory: "family" },
-  { id: "10", text: "sister", correctCategory: "family" },
-];
-
 // Utility functions
 export const formatTime = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
@@ -50,8 +30,12 @@ export const formatTime = (seconds: number): string => {
 
 export const getScrollAnimation = () => `
   @keyframes scroll-right {
-    0% { transform: translateX(-33.333%); }
-    100% { transform: translateX(0); }
+    0% { 
+      transform: translateX(-50%); 
+    }
+    100% { 
+      transform: translateX(0); 
+    }
   }
   [data-dragging="true"] {
     border-color: #d1d5db !important;
@@ -64,9 +48,77 @@ export const getScrollAnimation = () => `
   }
 `;
 
-export function useSpeedSortingGame() {
-  const [words, setWords] = useState<WordItem[]>(mockWords);
+interface SpeedSortingDetail {
+  id: string;
+  name: string;
+  description: string;
+  thumbnail_image: string;
+  categories: { id: string; name: string }[];
+  items: {
+    id: string;
+    value: string;
+    category_index?: number;
+    category_id?: string;
+    type: "text" | "file";
+  }[];
+}
+
+const transformDataToGameFormat = (
+  detail: SpeedSortingDetail | null,
+): { words: WordItem[]; categories: Category[] } => {
+  if (!detail) return { words: [], categories: [] };
+
+  const categories: Category[] = detail.categories.map((cat, index) => ({
+    id: cat.id,
+    name: cat.name,
+    color:
+      index === 0
+        ? "bg-blue-600"
+        : index === 1
+          ? "bg-green-600"
+          : index === 2
+            ? "bg-purple-600"
+            : "bg-red-600",
+  }));
+
+  const words: WordItem[] = detail.items.map((item) => {
+    // Handle both category_index and direct category_id approaches
+    let correctCategoryId = "";
+
+    if (typeof item.category_index === "number" && item.category_index >= 0) {
+      // Use category_index if it's a valid number
+      correctCategoryId = detail.categories[item.category_index]?.id || "";
+    } else if (item.category_id) {
+      // Fallback to category_id if category_index is not available
+      correctCategoryId = item.category_id;
+    } else {
+      // Last resort: use first category as default
+      correctCategoryId = detail.categories[0]?.id || "";
+    }
+
+    return {
+      id: item.id,
+      text: item.type === "text" ? item.value : `Image: ${item.id}`,
+      correctCategory: correctCategoryId,
+      completed: false,
+    };
+  });
+
+  return { words, categories };
+};
+
+export function useSpeedSortingGame(detail: SpeedSortingDetail | null = null) {
+  const [words, setWords] = useState<WordItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    if (detail) {
+      const newGameData = transformDataToGameFormat(detail);
+      setWords(newGameData.words);
+      setCategories(newGameData.categories);
+    }
+  }, [detail]);
   const [timer, setTimer] = useState(0);
   const [incorrectAttempts, setIncorrectAttempts] = useState(0);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -78,9 +130,9 @@ export function useSpeedSortingGame() {
   const [gameState, setGameState] = useState<GameState>("waiting");
   const [countdown, setCountdown] = useState(3);
 
-  const totalWords = mockWords.length;
+  const totalWords = words.length;
   const completedWords = words.filter((w) => w.completed).length;
-  const speed = 10;
+  const speed = totalWords <= 10 ? 5 : totalWords <= 20 ? 15 : 10;
 
   useEffect(() => {
     if (gameState !== "playing" || gameEnded) return;
@@ -111,7 +163,10 @@ export function useSpeedSortingGame() {
   };
 
   const resetGame = () => {
-    setWords(mockWords);
+    // Get fresh game data
+    const freshGameData = transformDataToGameFormat(detail);
+    setWords(freshGameData.words.map((w) => ({ ...w, completed: false })));
+    setCategories(freshGameData.categories);
     setScore(0);
     setTimer(0);
     setIncorrectAttempts(0);
@@ -202,6 +257,7 @@ export function useSpeedSortingGame() {
   return {
     // State
     words,
+    categories,
     score,
     timer,
     incorrectAttempts,

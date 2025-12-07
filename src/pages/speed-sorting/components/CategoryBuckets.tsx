@@ -33,8 +33,8 @@ export function CategoryBuckets({
             px-4 py-3 sm:px-8 sm:py-6 lg:px-12 lg:py-8
             text-sm sm:text-lg lg:text-2xl font-semibold sm:font-bold text-center cursor-pointer
             transform transition-all duration-200 hover:scale-105 shadow-md sm:shadow-lg
-            w-full sm:w-auto min-w-[140px] sm:min-w-[160px] lg:min-w-[200px]
-            min-h-[80px] sm:min-h-[120px] lg:min-h-[140px]
+            w-full sm:w-auto min-w-[140px] sm:min-w-40 lg:min-w-[200px]
+            min-h-20 sm:min-h-[120px] lg:min-h-[140px]
             flex items-center justify-center
             ${
               dropFeedback?.categoryId === category.id

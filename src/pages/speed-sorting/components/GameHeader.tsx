@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Maximize2, Volume2 } from "lucide-react";
+import { ArrowLeft, Maximize2, Minimize2, Volume2 } from "lucide-react";
+import { useState } from "react";
 import { formatTime } from "../hooks/useSpeedSortingGame";
 
 interface GameHeaderProps {
@@ -9,6 +10,18 @@ interface GameHeaderProps {
 }
 
 export function GameHeader({ timer, score, onExit }: GameHeaderProps) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
   return (
     <div className="bg-white h-fit w-full flex justify-between items-center px-8 py-4 shadow-sm">
       <div>
@@ -44,8 +57,17 @@ export function GameHeader({ timer, score, onExit }: GameHeaderProps) {
         <Button size="sm" variant="ghost" className="p-2">
           <Volume2 className="w-5 h-5" />
         </Button>
-        <Button size="sm" variant="ghost" className="p-2">
-          <Maximize2 className="w-5 h-5" />
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-2"
+          onClick={toggleFullscreen}
+        >
+          {isFullscreen ? (
+            <Minimize2 className="w-5 h-5" />
+          ) : (
+            <Maximize2 className="w-5 h-5" />
+          )}
         </Button>
       </div>
     </div>

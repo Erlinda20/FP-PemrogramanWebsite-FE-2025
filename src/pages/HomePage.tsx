@@ -1,27 +1,27 @@
-import { useState, useEffect } from "react";
 import api from "@/api/axios";
-import { useAuthStore } from "@/store/useAuthStore";
-import { User, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Typography } from "@/components/ui/typography";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import Navbar from "@/components/ui/layout/Navbar";
-import thumbnailPlaceholder from "../assets/images/thumbnail-placeholder.png";
-import iconSearch from "../assets/images/icon-search.svg";
-import iconHeart from "../assets/images/icon-heart.svg";
+import { Typography } from "@/components/ui/typography";
+import { useAuthStore } from "@/store/useAuthStore";
+import { ChevronDown, User } from "lucide-react";
+import { useEffect, useState } from "react";
 import iconHeartSolid from "../assets/images/icon-heart-solid.svg";
+import iconHeart from "../assets/images/icon-heart.svg";
 import iconPlay from "../assets/images/icon-play.svg";
+import iconSearch from "../assets/images/icon-search.svg";
 import iconVector from "../assets/images/icon-vector.svg";
+import thumbnailPlaceholder from "../assets/images/thumbnail-placeholder.png";
 
 type GameTemplate = {
   id: string;
@@ -183,8 +183,19 @@ export default function HomePage() {
   };
 
   const GameCard = ({ game }: { game: Game }) => {
+    let gametype = "";
     const handlePlayGame = () => {
-      window.location.href = `/quiz/play/${game.id}`;
+      switch (game.game_template) {
+        case "quiz":
+          gametype = "quiz";
+          break;
+        case "speed-sorting":
+          gametype = "speed-sorting";
+          break;
+        default:
+          gametype = "";
+      }
+      window.location.href = `/${gametype}/play/${game.id}`;
     };
 
     return (
