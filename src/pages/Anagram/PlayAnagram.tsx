@@ -120,6 +120,12 @@ const PlayAnagram = () => {
     }
   }, [isLoading, gameFinished]);
 
+  // --- SOUND EFFECTS ---
+  const playSound = (type: "pop" | "error") => {
+    const audio = new Audio(`/sounds/${type}.mp3`);
+    audio.play().catch((err) => console.error("Error playing sound:", err));
+  };
+
   const formatTime = (t: number) => {
     const minutes = Math.floor(t / 60)
       .toString()
@@ -318,8 +324,6 @@ const PlayAnagram = () => {
         return;
       }
 
-      setIsChecking(true);
-
       const letterCount = correctWordNoSpaces.length;
 
       // Calculate score based on hints and mistakes
@@ -406,6 +410,7 @@ const PlayAnagram = () => {
         // 🛑 UBAH LOGIC ERROR DI SINI 🛑
         setErrorSlotIndex(firstEmptySlot); // <-- Tentukan slot mana yang error
         setShowError(true);
+        playSound("error");
         setHadWrongInput(true);
         // Reset setelah 500ms (sesuai durasi animasinya)
         setTimeout(() => {
@@ -422,6 +427,7 @@ const PlayAnagram = () => {
       const newAvailableLetters = [...availableLetters];
       newAvailableLetters[index].used = true;
       setAvailableLetters(newAvailableLetters);
+      playSound("pop");
     },
     [
       availableLetters,
@@ -523,6 +529,7 @@ const PlayAnagram = () => {
 
       setHintsUsed((prev) => prev + 1);
       setGlobalHintsUsed(true); // Mark global score as dirty
+      playSound("pop");
     }
   }, [
     gameData,
@@ -556,6 +563,7 @@ const PlayAnagram = () => {
         if (firstEmptySlot !== -1 && !isLetterCorrect(key, firstEmptySlot)) {
           setErrorSlotIndex(firstEmptySlot); // <-- Tentukan slot mana yang error
           setShowError(true);
+          playSound("error");
           setHadWrongInput(true); // Mark that user made a mistake
           setTimeout(() => setShowError(false), 500);
           return;
