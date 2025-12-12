@@ -89,12 +89,14 @@ const useSoundEffects = (isSoundOn: boolean) => {
 
   const getAudioContext = () => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext ||
+      audioContextRef.current = new (
+        window.AudioContext ||
         (
           window as unknown as Window & {
             webkitAudioContext: typeof AudioContext;
           }
-        ).webkitAudioContext)();
+        ).webkitAudioContext
+      )();
     }
     return audioContextRef.current;
   };
@@ -1144,11 +1146,15 @@ const PairOrNoPairGame = () => {
       });
 
       // Submit score to leaderboard
+      const token = localStorage.getItem("token");
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/game/game-type/pair-or-no-pair/${gameId}/evaluate`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
           body: JSON.stringify({
             score: score,
             difficulty: difficulty,
