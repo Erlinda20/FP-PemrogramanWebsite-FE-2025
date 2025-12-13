@@ -1,151 +1,177 @@
-// src/pages/jeopardy/JeopardyLobby.tsx
-
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useState } from "react"; // <-- PENTING: Import useState
-
-// Definisikan tipe data Team
-interface Team {
-  id: number;
-  name: string;
-  score: number;
-}
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { jeopardyApi } from "@/api/jeopardy";
+import { Users, Play, ArrowLeft } from "lucide-react";
+import { type Team } from "./types/jeopardy-types";
 
 export default function JeopardyLobby() {
-  // State untuk mengelola daftar tim. Dimulai dengan 2 tim.
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const [gameTitle, setGameTitle] = useState("Loading Game...");
+  const [isLoading, setIsLoading] = useState(true);
+  const [teamCount, setTeamCount] = useState(2);
+
+  // Default State: 2 Teams
   const [teams, setTeams] = useState<Team[]>([
-    { id: 1, name: "Team A", score: 0 },
-    { id: 2, name: "Team B", score: 0 },
+    { id: 1, name: "Team 1", score: 0 },
+    { id: 2, name: "Team 2", score: 0 },
   ]);
 
-  // Fungsi untuk menambah tim baru
-  const addTeam = () => {
-    const newId =
-      teams.length > 0 ? Math.max(...teams.map((t) => t.id)) + 1 : 1;
-    // Tentukan nama default berdasarkan jumlah tim
-    const defaultName = `Team ${String.fromCharCode(65 + teams.length)}`;
-    setTeams([...teams, { id: newId, name: defaultName, score: 0 }]);
+  // 1. Fetch Game Details (to show title and verify ID)
+  useEffect(() => {
+    if (!id) return;
+    jeopardyApi
+      .getDetail(id)
+      .then((res) => {
+        // Backend usually wraps response in { data: { ... } }
+        const data = res.data.data || res.data;
+        setGameTitle(data.name);
+
+        // Optional: If backend has a default max_teams setting, we could use it here
+        // const maxTeams = data.settings.max_teams;
+      })
+      .catch((err) => {
+        console.error("Failed to load game", err);
+        setGameTitle("Game Not Found");
+      })
+      .finally(() => setIsLoading(false));
+  }, [id]);
+
+  // 2. Handle Team Count Change
+  const handleTeamCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let count = parseInt(e.target.value);
+    if (isNaN(count)) count = 2;
+
+    // Hard limits: Min 1, Max 6 (or whatever fits your UI)
+    if (count < 1) count = 1;
+    if (count > 6) count = 6;
+
+    setTeamCount(count);
+
+    // Rebuild teams array, preserving existing names where possible
+    const newTeams = Array.from({ length: count }, (_, i) => ({
+      id: i + 1,
+      name: teams[i]?.name || `Team ${i + 1}`,
+      score: 0,
+    }));
+    setTeams(newTeams);
   };
 
-  // Fungsi untuk menghapus tim
-  const removeTeam = (id: number) => {
-    // Batasan: Hanya izinkan penghapusan jika tim lebih dari 2
-    if (teams.length > 2) {
-      setTeams(teams.filter((team) => team.id !== id));
-    }
+  // 3. Handle Name Edit
+  const handleTeamNameChange = (index: number, newName: string) => {
+    const newTeams = [...teams];
+    newTeams[index].name = newName;
+    setTeams(newTeams);
   };
 
-  // Fungsi untuk memperbarui nama tim
-  const handleNameChange = (id: number, newName: string) => {
-    setTeams(
-      teams.map((team) => (team.id === id ? { ...team, name: newName } : team)),
+  // 4. Start Game -> Navigate to Board with State
+  const handleStartGame = () => {
+    if (!id) return;
+    navigate(`/jeopardy/play/${id}`, {
+      state: { teams }, // <--- Passing data to the Board
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">
+        Loading Lobby...
+      </div>
     );
-  };
-
-  // Cek apakah game siap dimulai (minimal 2 tim dan semua nama terisi)
-  const isGameReady =
-    teams.length >= 2 && teams.every((t) => t.name.trim() !== "");
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
-      <h1 className="text-5xl font-extrabold mb-12 text-yellow-400 drop-shadow-lg">
-        Jeopardy Game Setup
-      </h1>
-
-      <Card className="w-full max-w-4xl bg-gray-800 border-gray-700 shadow-2xl">
-        <CardHeader className="border-b border-gray-700">
-          <CardTitle className="text-3xl text-yellow-400">
-            Lobby Configuration
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans">
+      <Card className="w-full max-w-lg bg-slate-900 border-slate-800 text-white shadow-2xl">
+        <CardHeader className="text-center border-b border-slate-800 pb-6">
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.5)]">
+              <Users className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <CardTitle className="text-3xl font-bold text-blue-400">
+            {gameTitle}
           </CardTitle>
+          <p className="text-slate-400 mt-2">Game Setup & Lobby</p>
         </CardHeader>
-        <CardContent className="p-6 space-y-8">
-          {/* 1. Project Selection */}
-          <div className="space-y-4">
-            <h3 className="text-xl font-semibold text-gray-200">
-              1. Select Project
-            </h3>
-            <div className="flex space-x-4">
-              <div className="flex-grow">
-                <Label htmlFor="project-id" className="text-gray-400">
-                  Project ID (Placeholder)
-                </Label>
-                <Input
-                  id="project-id"
-                  defaultValue="1"
-                  placeholder="Enter Project ID"
-                  className="bg-gray-700 border-gray-600 text-white"
-                  disabled
-                />
-              </div>
-              <div className="flex-grow-0 self-end">
-                <Button variant="secondary" disabled>
-                  Load Project
-                </Button>
-              </div>
+
+        <CardContent className="space-y-6 pt-6">
+          {/* Team Count Input */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-slate-300 uppercase tracking-wider">
+              Number of Teams
+            </label>
+            <div className="flex items-center gap-4">
+              <Input
+                type="number"
+                min={1}
+                max={6}
+                value={teamCount}
+                onChange={handleTeamCountChange}
+                className="bg-slate-800 border-slate-700 text-white text-lg h-12"
+              />
+              <span className="text-sm text-slate-500 italic">
+                (Max 6 recommended)
+              </span>
             </div>
           </div>
 
-          {/* 2. Team Configuration Form Area (Issue 2 Implementation) */}
-          <div className="space-y-4 border-t pt-4 border-gray-700">
-            <h3 className="text-xl font-semibold text-gray-200">
-              2. Team Configuration ({teams.length} Teams)
-            </h3>
-            <div className="space-y-3">
+          {/* Team Names List */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-slate-300 uppercase tracking-wider">
+              Team Names
+            </label>
+            <div className="grid gap-3 max-h-[300px] overflow-y-auto pr-2">
               {teams.map((team, index) => (
-                <div key={team.id} className="flex space-x-3 items-center">
-                  <Label className="w-10 text-lg text-yellow-300">
-                    #{index + 1}
-                  </Label>
+                <div
+                  key={team.id}
+                  className="flex items-center gap-3 animate-in slide-in-from-left-2 duration-300"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-blue-400 font-bold text-sm border border-blue-800">
+                    {index + 1}
+                  </div>
                   <Input
-                    type="text"
                     value={team.name}
-                    onChange={(e) => handleNameChange(team.id, e.target.value)}
-                    placeholder={`Enter Name for Team ${index + 1}`}
-                    className="flex-grow bg-gray-700 border-gray-600 text-white"
+                    onChange={(e) =>
+                      handleTeamNameChange(index, e.target.value)
+                    }
+                    placeholder={`Team ${index + 1}`}
+                    className="bg-slate-800 border-slate-700 text-white focus:border-blue-500 transition-colors"
                   />
-                  <Button
-                    variant="destructive"
-                    onClick={() => removeTeam(team.id)}
-                    disabled={teams.length <= 2} // Tidak bisa menghapus jika tim <= 2
-                  >
-                    Remove
-                  </Button>
                 </div>
               ))}
             </div>
-
-            <Button
-              onClick={addTeam}
-              className="mt-4 w-full bg-blue-600 hover:bg-blue-700"
-            >
-              + Add New Team
-            </Button>
-
-            {teams.length < 2 && (
-              <p className="text-red-400 text-sm mt-2">
-                Minimum 2 teams are required to start the game.
-              </p>
-            )}
-          </div>
-
-          {/* 3. Start Button */}
-          <div className="flex justify-end pt-4 border-t border-gray-700">
-            <Button
-              size="lg"
-              className="bg-green-600 hover:bg-green-700 text-xl font-bold"
-              disabled={!isGameReady} // Tombol Start hanya aktif jika isGameReady TRUE
-              onClick={() => {
-                // TODO: Implementasi navigasi ke game board di Issue 4
-                console.log("Starting game with teams:", teams);
-                alert("Game Start Log: Teams prepared (Issue 2 Done)");
-              }}
-            >
-              Start Game
-            </Button>
           </div>
         </CardContent>
+
+        <CardFooter className="flex flex-col gap-3 pt-6 border-t border-slate-800">
+          <Button
+            className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-900/20"
+            onClick={handleStartGame}
+          >
+            <Play className="w-5 h-5 mr-2 fill-current" />
+            Start Game
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full text-slate-400 hover:text-white"
+            onClick={() => navigate("/")}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Cancel & Return Home
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );
