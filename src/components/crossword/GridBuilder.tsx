@@ -15,13 +15,15 @@ export interface GridWord {
 
 interface GridBuilderProps {
   initialWords: { word: string; clue: string }[];
-  // Prop baru: Data posisi kata yang sudah ada sebelumnya (dari DB)
   prePlacedWords?: Omit<GridWord, "number">[];
   onSave: (gridWords: GridWord[], rows: number, cols: number) => void;
   onBack: () => void;
 }
 
 const GRID_SIZE = 20;
+
+// Helper: Bersihkan string
+const cleanStr = (s: string) => (s ? s.trim().toUpperCase() : "");
 
 export function GridBuilder({
   initialWords,
@@ -37,57 +39,50 @@ export function GridBuilder({
     "horizontal",
   );
 
+  // [FIX] Buat string JSON stabil untuk dependency useEffect
+  // Ini mencegah infinite loop karena array.filter() di parent selalu bikin array baru
+  const initialWordsJson = JSON.stringify(initialWords);
+  const prePlacedWordsJson = JSON.stringify(prePlacedWords);
+
   useEffect(() => {
-    // LOGIKA REVISI: Memisahkan kata yang sudah punya posisi vs belum
+    // Parse balik dari JSON string agar aman
+    const stableInitialWords = JSON.parse(
+      initialWordsJson,
+    ) as typeof initialWords;
+    const stablePrePlacedWords = JSON.parse(
+      prePlacedWordsJson,
+    ) as typeof prePlacedWords;
 
-    // 1. Filter prePlacedWords agar hanya mengambil kata yang MASIH ADA di initialWords
-    // (Misal user mengubah "APPLE" jadi "APPLES" di step 1, maka posisi "APPLE" lama dibuang)
-    const validPlacedWords: GridWord[] = [];
-    const placedWordStrings = new Set<string>();
+    const normalizedPlaced: GridWord[] = [];
+    const placedStrings = new Set<string>();
 
-    prePlacedWords.forEach((pw) => {
-      // Cek apakah kata ini ada di daftar input terbaru
-      const matchingInput = initialWords.find((iw) => iw.word === pw.word);
-      if (matchingInput) {
-        validPlacedWords.push({
+    stablePrePlacedWords.forEach((pw) => {
+      const pWord = cleanStr(pw.word);
+      const match = stableInitialWords.find(
+        (iw) => cleanStr(iw.word) === pWord,
+      );
+
+      if (match) {
+        normalizedPlaced.push({
           ...pw,
-          clue: matchingInput.clue, // Update clue jika berubah
-          number: validPlacedWords.length + 1,
+          word: pWord,
+          clue: match.clue,
+          number: normalizedPlaced.length + 1,
         });
-        placedWordStrings.add(pw.word);
+        placedStrings.add(pWord);
       }
     });
 
-    setPlacedWords(validPlacedWords);
+    setPlacedWords(normalizedPlaced);
 
-    // 2. Sisanya (kata baru atau kata yang diedit) masuk ke Available
-    const remainingWords = initialWords
-      .map((w) => w.word)
-      .filter((w) => !placedWordStrings.has(w));
+    const remaining = stableInitialWords
+      .map((w) => cleanStr(w.word))
+      .filter((w) => w.length > 0 && !placedStrings.has(w));
 
-    setAvailableWords(remainingWords);
-  }, [initialWords, prePlacedWords]);
+    setAvailableWords([...new Set(remaining)]);
 
-  const canPlaceWord = (
-    word: string,
-    r: number,
-    c: number,
-    dir: "horizontal" | "vertical",
-  ) => {
-    if (dir === "horizontal" && c + word.length > GRID_SIZE) return false;
-    if (dir === "vertical" && r + word.length > GRID_SIZE) return false;
-
-    for (let i = 0; i < word.length; i++) {
-      const currentRow = dir === "vertical" ? r + i : r;
-      const currentCol = dir === "horizontal" ? c + i : c;
-
-      const existingChar = getCharAt(currentRow, currentCol);
-      if (existingChar && existingChar !== word[i]) {
-        return false; // Tabrakan huruf beda
-      }
-    }
-    return true;
-  };
+    // [FIX] Gunakan variabel JSON string sebagai dependency
+  }, [initialWordsJson, prePlacedWordsJson]);
 
   const getCharAt = (r: number, c: number) => {
     for (const pw of placedWords) {
@@ -104,20 +99,49 @@ export function GridBuilder({
     return null;
   };
 
+  const canPlaceWord = (
+    word: string,
+    r: number,
+    c: number,
+    dir: "horizontal" | "vertical",
+  ) => {
+    if (dir === "horizontal" && c + word.length > GRID_SIZE) return false;
+    if (dir === "vertical" && r + word.length > GRID_SIZE) return false;
+
+    for (let i = 0; i < word.length; i++) {
+      const currR = dir === "vertical" ? r + i : r;
+      const currC = dir === "horizontal" ? c + i : c;
+
+      const existingChar = getCharAt(currR, currC);
+
+      if (existingChar && existingChar !== word[i]) {
+        console.warn(
+          `Conflict at [${currR},${currC}]: ${existingChar} vs ${word[i]}`,
+        );
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleCellClick = (r: number, c: number) => {
     if (!selectedWordStr) return;
 
-    if (!canPlaceWord(selectedWordStr, r, c, direction)) {
-      alert("Cannot place word here (Overlap or Out of bounds)");
+    const wordToPlace = cleanStr(selectedWordStr);
+
+    if (!canPlaceWord(wordToPlace, r, c, direction)) {
+      alert("Cannot place here. Check overlap or bounds.");
       return;
     }
 
-    const fullWordData = initialWords.find((w) => w.word === selectedWordStr);
-    if (!fullWordData) return;
+    const originalRef = initialWords.find(
+      (w) => cleanStr(w.word) === wordToPlace,
+    );
+    const clue = originalRef ? originalRef.clue : "";
 
     const newPlacedWord: GridWord = {
-      word: selectedWordStr,
-      clue: fullWordData.clue,
+      word: wordToPlace,
+      clue: clue,
       row: r,
       col: c,
       direction: direction,
@@ -131,11 +155,7 @@ export function GridBuilder({
 
   const handleRemovePlacedWord = (index: number) => {
     const removed = placedWords[index];
-
-    // Hapus dari placed
     const newPlaced = placedWords.filter((_, i) => i !== index);
-
-    // Re-assign numbers agar urut (1, 2, 3...)
     const reorderedPlaced = newPlaced.map((pw, i) => ({
       ...pw,
       number: i + 1,
@@ -147,12 +167,7 @@ export function GridBuilder({
 
   const handleFinish = () => {
     if (availableWords.length > 0) {
-      if (
-        !confirm(
-          "Some words are not placed on the grid and will be discarded. Continue?",
-        )
-      )
-        return;
+      if (!confirm("Discard unplaced words?")) return;
     }
     onSave(placedWords, GRID_SIZE, GRID_SIZE);
   };
@@ -166,13 +181,16 @@ export function GridBuilder({
       for (let i = 0; i < pw.word.length; i++) {
         const r = pw.direction === "vertical" ? pw.row + i : pw.row;
         const c = pw.direction === "horizontal" ? pw.col + i : pw.col;
-        displayGrid[r][c] = pw.word[i];
+
+        if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+          displayGrid[r][c] = pw.word[i];
+        }
       }
     });
 
     return (
       <div
-        className="grid border border-slate-300 bg-white shadow-sm"
+        className="grid border border-slate-300 bg-white shadow-sm select-none"
         style={{
           gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`,
           width: "100%",
@@ -184,9 +202,9 @@ export function GridBuilder({
           row.map((cellChar: string, cIdx: number) => (
             <div
               key={`${rIdx}-${cIdx}`}
-              onClick={() => handleCellClick(rIdx, cIdx)}
+              onMouseDown={() => handleCellClick(rIdx, cIdx)}
               className={cn(
-                "border-[0.5px] border-slate-100 flex items-center justify-center text-[10px] sm:text-xs font-bold select-none cursor-pointer hover:bg-slate-50 transition-colors",
+                "border-[0.5px] border-slate-100 flex items-center justify-center text-[10px] sm:text-xs font-bold cursor-pointer hover:bg-slate-50 transition-colors",
                 cellChar ? "bg-blue-600 text-white border-blue-700" : "",
                 selectedWordStr && !cellChar ? "hover:bg-green-100" : "",
               )}
@@ -206,7 +224,7 @@ export function GridBuilder({
           <div>
             <h3 className="font-bold text-lg">Step 2: Arrange Grid</h3>
             <p className="text-xs text-slate-500">
-              Click a word on the right, then click on the grid.
+              1. Click word on right. 2. Click grid cell.
             </p>
           </div>
 
@@ -238,7 +256,7 @@ export function GridBuilder({
             disabled={placedWords.length === 0}
             className="w-40"
           >
-            Save Changes <ArrowRight className="ml-2 w-4 h-4" />
+            Generate Game <ArrowRight className="ml-2 w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -283,8 +301,7 @@ export function GridBuilder({
             <div className="mt-4 p-3 bg-blue-50 text-blue-800 text-xs rounded border border-blue-100 flex gap-2 items-start">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <p>
-                Now click any cell on the grid to place <b>{selectedWordStr}</b>{" "}
-                ({direction})
+                Now click grid to place <b>{selectedWordStr}</b> ({direction})
               </p>
             </div>
           )}
