@@ -9,6 +9,9 @@ import ProfilePage from "./pages/ProfilePage";
 import Quiz from "./pages/Quiz";
 import Register from "./pages/Register";
 import Sandbox from "./pages/Sandbox";
+import TypeTheAnswer from "./pages/TypeTheAnswer";
+import CreateTypeTheAnswer from "./pages/CreateTypeTheAnswer";
+import EditTypeTheAnswer from "./pages/EditTypeTheAnswer";
 import CreateSpeedSorting from "./pages/speed-sorting/CreateSpeedSorting";
 import EditSpeedSorting from "./pages/speed-sorting/EditSpeedSorting";
 import SpeedSorting from "./pages/speed-sorting/SpeedSorting";
@@ -37,6 +40,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
+        <Route path="/type-the-answer/play/:id" element={<TypeTheAnswer />} />
         <Route path="/maze-chase/play/:id" element={<MazeChase />} />
         <Route path="/speed-sorting/play/:id" element={<SpeedSorting />} />
         <Route path="/anagram/play/:id" element={<PlayAnagram />} />
@@ -55,6 +59,10 @@ function App() {
           <Route path="/create-projects" element={<CreateProject />} />
           <Route path="/create-quiz" element={<CreateQuiz />} />
           <Route
+            path="/create-type-the-answer"
+            element={<CreateTypeTheAnswer />}
+          />
+          <Route
             path="/create-speed-sorting"
             element={<CreateSpeedSorting />}
           />
@@ -65,6 +73,10 @@ function App() {
           <Route path="/create-maze-chase" element={<CreateMazeChase />} />
           <Route path="/create-anagram" element={<CreateAnagram />} />
           <Route path="/quiz/edit/:id" element={<EditQuiz />} />
+          <Route
+            path="/type-the-answer/edit/:id"
+            element={<EditTypeTheAnswer />}
+          />
           <Route
             path="/pair-or-no-pair/edit/:id"
             element={<EditPairOrNoPair />}

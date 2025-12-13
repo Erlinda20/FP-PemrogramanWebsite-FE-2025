@@ -21,9 +21,17 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      const { logout } = useAuthStore.getState();
-      logout();
-      window.location.href = "/login";
+      // Don't redirect to login for public endpoints
+      const publicEndpoints = ["/check", "/play/public", "/leaderboard"];
+      const isPublicEndpoint = publicEndpoints.some((endpoint) =>
+        err.config?.url?.includes(endpoint),
+      );
+
+      if (!isPublicEndpoint) {
+        const { logout } = useAuthStore.getState();
+        logout();
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(err);
   },
