@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
+import api from "@/api/axios";
 import catImage from "./images/cat_image_1765100975047.png";
 import dogImage from "./images/dog_image_1765100992258.png";
 import appleImage from "./images/apple_image_1765101007846.png";
@@ -296,6 +297,7 @@ const PairOrNoPairGame = () => {
     playMismatch,
   } = useSoundEffects(isSoundOn);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const playCountUpdated = useRef(false);
 
   // Fetch Data
   useEffect(() => {
@@ -350,6 +352,9 @@ const PairOrNoPairGame = () => {
 
   // Start Game Logic
   const handleStart = () => {
+    // Reset play count flag when starting a new game
+    playCountUpdated.current = false;
+
     // 1. Prepare Cards (Max 16 pairs = 32 cards)
     const gameItems = items.slice(0, 16);
     const generatedCards: GridCardData[] = [];
@@ -469,6 +474,21 @@ const PairOrNoPairGame = () => {
       }
     }
   }, [cards, gameState]);
+
+  // Update play count when game is finished
+  useEffect(() => {
+    if (gameState === "finished" && gameId && !playCountUpdated.current) {
+      playCountUpdated.current = true;
+      api
+        .post("/api/game/play-count", {
+          game_id: gameId,
+        })
+        .catch((err) => {
+          console.error("Failed to update play count:", err);
+          // Don't show error toast as it's not critical
+        });
+    }
+  }, [gameState, gameId]);
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);

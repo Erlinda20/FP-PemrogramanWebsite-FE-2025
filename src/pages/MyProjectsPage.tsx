@@ -193,6 +193,12 @@ export default function MyProjectsPage() {
                       size="sm"
                       className="h-7"
                       onClick={() => {
+                        if (!project.game_template_slug) {
+                          toast.error(
+                            "Game template not found. Cannot play this game.",
+                          );
+                          return;
+                        }
                         navigate(
                           `/${project.game_template_slug}/play/${project.id}`,
                         );

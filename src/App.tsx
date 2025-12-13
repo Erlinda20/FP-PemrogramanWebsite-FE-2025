@@ -13,14 +13,16 @@ import CreateSpeedSorting from "./pages/speed-sorting/CreateSpeedSorting";
 import EditSpeedSorting from "./pages/speed-sorting/EditSpeedSorting";
 import SpeedSorting from "./pages/speed-sorting/SpeedSorting";
 import ProtectedRoute from "./routes/ProtectedRoutes";
-import CreateAnagram from "./pages/anagram/CreateAnagram";
-import PlayAnagram from "./pages/anagram/PlayAnagram";
-import EditAnagram from "./pages/anagram/EditAnagram";
+import CreateAnagram from "./pages/Anagram/CreateAnagram";
+import PlayAnagram from "./pages/Anagram/PlayAnagram";
+import EditAnagram from "./pages/Anagram/EditAnagram";
 // Fix typo case sensitivity
 
 // 📌 TAMBAHAN 1: Import Komponen Game Pair or No Pair
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
+import EditPairOrNoPair from "./pages/pair-or-no-pair/edit";
+import RedirectPlayRoute from "./pages/RedirectPlayRoute";
 
 function App() {
   return (
@@ -37,6 +39,10 @@ function App() {
           path="/pair-or-no-pair/play/:gameId"
           element={<PairOrNoPairGame />}
         />
+        <Route
+          path="/matching-pair/play/:gameId"
+          element={<PairOrNoPairGame />}
+        />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfilePage />} />
@@ -51,6 +57,10 @@ function App() {
             path="/create-pair-or-no-pair"
             element={<CreatePairOrNoPair />}
           />
+          <Route
+            path="/create-matching-pair"
+            element={<CreatePairOrNoPair />}
+          />
           <Route path="/quiz/edit/:id" element={<EditQuiz />} />
           <Route
             path="/speed-sorting/edit/:id"
@@ -58,7 +68,17 @@ function App() {
           />
           <Route path="/create-anagram" element={<CreateAnagram />} />
           <Route path="/anagram/edit/:id" element={<EditAnagram />} />
+          <Route
+            path="/pair-or-no-pair/edit/:id"
+            element={<EditPairOrNoPair />}
+          />
+          <Route
+            path="/matching-pair/edit/:id"
+            element={<EditPairOrNoPair />}
+          />
         </Route>
+        {/* Catch-all route for malformed play URLs (e.g., /undefined/play/:id) - must be last */}
+        <Route path="/*/play/:id" element={<RedirectPlayRoute />} />
       </Routes>
     </>
   );
