@@ -9,9 +9,6 @@ import ProfilePage from "./pages/ProfilePage";
 import Quiz from "./pages/Quiz";
 import Register from "./pages/Register";
 import Sandbox from "./pages/Sandbox";
-import TypeTheAnswer from "./pages/TypeTheAnswer";
-import CreateTypeTheAnswer from "./pages/CreateTypeTheAnswer";
-import EditTypeTheAnswer from "./pages/EditTypeTheAnswer";
 import CreateSpeedSorting from "./pages/speed-sorting/CreateSpeedSorting";
 import EditSpeedSorting from "./pages/speed-sorting/EditSpeedSorting";
 import SpeedSorting from "./pages/speed-sorting/SpeedSorting";
@@ -22,7 +19,7 @@ import EditAnagram from "./pages/Anagram/EditAnagram";
 import MazeChase from "./pages/maze-chase/MazeChase";
 import CreateMazeChase from "./pages/maze-chase/CreateMazeChase";
 import EditMazeChase from "./pages/maze-chase/EditMazeChase";
-
+// 📌 TAMBAHAN 1: Import Komponen Game Pair or No Pair
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
 import EditPairOrNoPair from "./pages/pair-or-no-pair/edit";
@@ -30,8 +27,12 @@ import EditPairOrNoPair from "./pages/pair-or-no-pair/edit";
 import CreateSlidingPuzzle from "./pages/sliding-puzzle/CreateSlidingPuzzle";
 import EditSlidingPuzzle from "./pages/sliding-puzzle/EditSlidingPuzzle";
 import PlaySlidingPuzzle from "./pages/sliding-puzzle/PlaySlidingPuzzle";
-
-// 📌 TAMBAHAN 2: Import Komponen Game Whack-a-Mole
+import CreateFlipTiles from "./pages/flip-tiles/CreateFlipTiles";
+import EditFlipTiles from "./pages/flip-tiles/EditFlipTiles";
+import FlipTiles from "./pages/flip-tiles/FlipTiles";
+import TypeTheAnswer from "./pages/TypeTheAnswer";
+import CreateTypeTheAnswer from "./pages/CreateTypeTheAnswer";
+import EditTypeTheAnswer from "./pages/EditTypeTheAnswer";
 import WhackAMoleGame from "./pages/whack-a-mole";
 import CreateWhackAMole from "./pages/whack-a-mole/create";
 import EditWhackAMole from "./pages/whack-a-mole/edit";
@@ -47,6 +48,7 @@ function App() {
         <Route path="/quiz/play/:id" element={<Quiz />} />
         <Route path="/type-the-answer/play/:id" element={<TypeTheAnswer />} />
         <Route path="/maze-chase/play/:id" element={<MazeChase />} />
+        <Route path="/flip-tiles/play/:id" element={<FlipTiles />} />
         <Route path="/speed-sorting/play/:id" element={<SpeedSorting />} />
         <Route path="/anagram/play/:id" element={<PlayAnagram />} />
         <Route
@@ -64,6 +66,7 @@ function App() {
           <Route path="/my-projects" element={<MyProjectsPage />} />
           <Route path="/create-projects" element={<CreateProject />} />
           <Route path="/create-quiz" element={<CreateQuiz />} />
+          <Route path="/create-flip-tiles" element={<CreateFlipTiles />} />
           <Route
             path="/create-type-the-answer"
             element={<CreateTypeTheAnswer />}
@@ -72,6 +75,7 @@ function App() {
             path="/create-speed-sorting"
             element={<CreateSpeedSorting />}
           />
+          <Route path="/create-anagram" element={<CreateAnagram />} />
           <Route
             path="/create-pair-or-no-pair"
             element={<CreatePairOrNoPair />}
@@ -81,6 +85,7 @@ function App() {
           <Route path="/create-maze-chase" element={<CreateMazeChase />} />
           <Route path="/create-anagram" element={<CreateAnagram />} />
           <Route path="/quiz/edit/:id" element={<EditQuiz />} />
+          <Route path="/flip-tiles/edit/:id" element={<EditFlipTiles />} />
           <Route
             path="/type-the-answer/edit/:id"
             element={<EditTypeTheAnswer />}
