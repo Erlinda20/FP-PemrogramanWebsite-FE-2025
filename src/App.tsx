@@ -40,6 +40,7 @@ import EditWhackAMole from "./pages/whack-a-mole/edit";
 import CreateJeopardy from "./pages/jeopardy/CreateJeopardy";
 import JeopardyLobby from "./pages/jeopardy/JeopardyLobby";
 import JeopardyBoard from "./pages/jeopardy/JeopardyBoard";
+import JeopardyGameEnd from "./pages/jeopardy/JeopardyGameEnd";
 
 function App() {
   return (
@@ -66,6 +67,7 @@ function App() {
         />
         <Route path="/jeopardy/play/:id/setup" element={<JeopardyLobby />} />
         <Route path="/jeopardy/play/:id" element={<JeopardyBoard />} />
+        <Route path="/jeopardy/play/:id/end" element={<JeopardyGameEnd />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfilePage />} />

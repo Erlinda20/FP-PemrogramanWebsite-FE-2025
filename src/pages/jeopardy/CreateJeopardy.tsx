@@ -480,7 +480,7 @@ export default function CreateJeopardy() {
             </CardHeader>
 
             <CardContent className="overflow-x-auto">
-              <div className="flex gap-4 min-w-max pb-4">
+              <div className="flex gap-4 min-w-max pb-4 pt-5 px-2">
                 {gameData.rounds[activeRoundIndex].categories.map(
                   (category, catIndex) => (
                     <div
@@ -492,7 +492,7 @@ export default function CreateJeopardy() {
                         <Button
                           size="icon"
                           variant="destructive"
-                          className="h-6 w-6 rounded-full"
+                          className="h-6 w-6 rounded-full shadow-md"
                           onClick={() => removeCategory(catIndex)}
                         >
                           <X className="w-3 h-3" />
@@ -510,6 +510,7 @@ export default function CreateJeopardy() {
                           setGameData({ ...gameData, rounds: newRounds });
                         }}
                       />
+
                       {category.clues.map((clue, clueIndex) => (
                         <div
                           key={clue.id}
@@ -517,11 +518,9 @@ export default function CreateJeopardy() {
                             setEditingClue({ catIndex, clueIndex });
                             setTempClueData({ ...clue });
                           }}
-                          className={`
-                                            h-20 border-2 rounded-md flex flex-col items-center justify-center cursor-pointer relative
+                          className={`h-20 border-2 rounded-md flex flex-col items-center justify-center cursor-pointer relative
                                             hover:border-blue-500 hover:bg-blue-50
-                                            ${clue.question ? "bg-green-50 border-green-200" : "bg-white border-slate-200"}
-                                        `}
+                                            ${clue.question ? "bg-green-50 border-green-200" : "bg-white border-slate-200"}`}
                         >
                           {clue.media_file && (
                             <ImageIcon className="absolute top-1 right-1 w-3 h-3 text-blue-500" />

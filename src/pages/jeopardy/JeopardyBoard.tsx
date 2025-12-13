@@ -188,7 +188,12 @@ export default function JeopardyBoard() {
                 setCurrentRoundIndex((prev) => prev + 1);
               } else {
                 // End Game
-                if (confirm("End game and exit?")) navigate("/");
+                if (confirm("End game and see results?")) {
+                  // Navigate to the End Page and PASS THE TEAMS data
+                  navigate(`/jeopardy/play/${id}/end`, {
+                    state: { teams },
+                  });
+                }
               }
             }}
           >
@@ -210,7 +215,7 @@ export default function JeopardyBoard() {
           {currentRound.categories.map((cat) => (
             <div key={cat.id} className="flex flex-col gap-2 h-full">
               {/* Category Header */}
-              <div className="bg-blue-800 text-white p-2 flex items-center justify-center text-center font-bold text-sm md:text-xl border-2 border-black shadow-[inset_0_0_15px_rgba(0,0,0,0.6)] h-24 uppercase break-words">
+              <div className="bg-blue-800 text-white p-2 flex items-center justify-center text-center font-bold text-sm md:text-xl border-2 border-black shadow-[inset_0_0_15px_rgba(0,0,0,0.6)] h-24 uppercase wrap-break-word">
                 {cat.title}
               </div>
 
@@ -249,7 +254,7 @@ export default function JeopardyBoard() {
         {teams.map((team) => (
           <div
             key={team.id}
-            className="bg-blue-800 border-2 border-yellow-400 min-w-[160px] p-2 relative group"
+            className="bg-blue-800 border-2 border-yellow-400 min-w-40 p-2 relative group"
           >
             <div className="text-white text-center font-bold truncate px-2">
               {team.name}
@@ -326,7 +331,7 @@ export default function JeopardyBoard() {
           {modalPhase === "ANSWER" && activeClue && (
             <div className="flex-1 flex flex-col p-6 animate-in fade-in">
               {/* Top: The Correct Answer */}
-              <div className="flex-[2] flex flex-col items-center justify-center text-center border-b-2 border-blue-700 mb-4">
+              <div className="flex-2 flex flex-col items-center justify-center text-center border-b-2 border-blue-700 mb-4">
                 <h3 className="text-slate-400 text-xl uppercase mb-2">
                   Correct Response
                 </h3>
