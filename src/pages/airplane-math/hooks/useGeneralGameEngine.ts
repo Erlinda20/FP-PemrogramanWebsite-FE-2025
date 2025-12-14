@@ -12,7 +12,7 @@ const generateQuestion = (): MathQuestion => {
   const a = Math.floor(Math.random() * 10) + 1;
   const b = Math.floor(Math.random() * 10) + 1;
   const operator = Math.random() > 0.5 ? "+" : "-";
-  // Ensure positive result for subtraction
+
   const [n1, n2] = operator === "-" && b > a ? [b, a] : [a, b];
 
   return {
@@ -21,13 +21,14 @@ const generateQuestion = (): MathQuestion => {
   };
 };
 
-export const useGameEngine = () => {
-  const [gameState, setGameState] = useState<GameStatus>("playing");
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const useGeneralGameEngine = (_gameId?: string) => {
+  const [gameState, setGameState] = useState<GameStatus>("menu");
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [question, setQuestion] = useState<MathQuestion | null>(null);
+  const [gameMode, setGameMode] = useState<"math" | "general">("math");
 
-  // Using refs for high-frequency updates to avoid stale closures in loop
   const playerRef = useRef<Player>({
     x: 50,
     y: CANVAS_HEIGHT / 2,
@@ -35,8 +36,6 @@ export const useGameEngine = () => {
     height: PLAYER_SIZE,
   });
   const cloudsRef = useRef<Cloud[]>([]);
-
-  // FIX: Tambahkan | null dan inisialisasi null
   const requestRef = useRef<number | null>(null);
   const lastSpawnTimeRef = useRef<number>(0);
   const mousePosRef = useRef<{ x: number; y: number }>({
@@ -45,26 +44,35 @@ export const useGameEngine = () => {
   });
   const questionRef = useRef<MathQuestion | null>(null);
 
-  // Initialize game
-  useEffect(() => {
+  const startGame = (mode: "math" | "general") => {
+    setGameMode(mode);
+    setScore(0);
+    setLives(3);
+    cloudsRef.current = [];
+    playerRef.current = {
+      x: 50,
+      y: CANVAS_HEIGHT / 2,
+      width: PLAYER_SIZE,
+      height: PLAYER_SIZE,
+    };
+
     const q = generateQuestion();
     setQuestion(q);
     questionRef.current = q;
-  }, []);
+
+    setGameState("playing");
+  };
 
   const spawnCloud = (timestamp: number) => {
     if (timestamp - lastSpawnTimeRef.current > SPAWN_RATE) {
-      // FIX: Hapus variabel 'isCorrect' yang tidak terpakai
-
       const hasCorrect = cloudsRef.current.some((c) => c.isCorrect);
       const shouldBeCorrect = !hasCorrect || Math.random() > 0.7;
 
       const value =
         shouldBeCorrect && questionRef.current
           ? questionRef.current.answer
-          : Math.floor(Math.random() * 20); // Random wrong answer
+          : Math.floor(Math.random() * 20);
 
-      // Ensure wrong answer is strictly not the correct one
       const finalValue =
         !shouldBeCorrect &&
         questionRef.current &&
@@ -89,7 +97,6 @@ export const useGameEngine = () => {
   };
 
   const updatePhysics = () => {
-    // Update Player Position (Lerp towards mouse)
     const player = playerRef.current;
     const target = mousePosRef.current;
 
@@ -101,12 +108,10 @@ export const useGameEngine = () => {
     player.x = Math.max(0, Math.min(CANVAS_WIDTH - player.width, player.x));
     player.y = Math.max(0, Math.min(CANVAS_HEIGHT - player.height, player.y));
 
-    // Update Clouds
     cloudsRef.current.forEach((cloud) => {
       cloud.x -= cloud.speed;
     });
 
-    // Remove off-screen clouds
     cloudsRef.current = cloudsRef.current.filter((c) => c.x + c.width > -50);
   };
 
@@ -126,19 +131,13 @@ export const useGameEngine = () => {
         player.y < cloud.y + cloud.height &&
         player.y + player.height > cloud.y
       ) {
-        // Collision!
         if (cloud.value === currentQ.answer) {
-          // Correct!
           setScore((s) => s + 10);
-          // New Question
           const newQ = generateQuestion();
           setQuestion(newQ);
           questionRef.current = newQ;
-
           cloudsRef.current.splice(i, 1);
-          console.log("Correct!");
         } else {
-          // Wrong!
           setLives((l) => {
             const newLives = l - 1;
             if (newLives <= 0) {
@@ -147,7 +146,6 @@ export const useGameEngine = () => {
             return newLives;
           });
           cloudsRef.current.splice(i, 1);
-          console.log("Wrong!");
         }
       }
     }
@@ -161,13 +159,11 @@ export const useGameEngine = () => {
         spawnCloud(timestamp);
         updatePhysics();
         checkCollisions();
-
-        // Force React Re-render to show updates
         setTick((t) => t + 1);
-
         requestRef.current = requestAnimationFrame(gameLoop);
       }
     },
+
     [gameState],
   );
 
@@ -193,6 +189,7 @@ export const useGameEngine = () => {
 
   return {
     gameState,
+    gameMode,
     score,
     lives,
     question,
@@ -201,6 +198,7 @@ export const useGameEngine = () => {
     handleMouseMove,
     pauseGame,
     resumeGame,
+    startGame,
     CANVAS_WIDTH,
     CANVAS_HEIGHT,
   };

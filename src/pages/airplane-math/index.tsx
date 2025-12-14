@@ -18,15 +18,17 @@ const AirplaneGeneralGame = () => {
     question,
     player,
     clouds,
+    handleMouseMove,
     pauseGame,
     resumeGame,
-    startGame, // <-- KUNCINYA DI SINI
+    startGame,
     CANVAS_WIDTH,
     CANVAS_HEIGHT,
   } = useGeneralGameEngine(id);
 
   const handleExit = async () => {
     try {
+      // Logic untuk mencatat permainan selesai
       if (id) await api.post(`/api/game/play/${id}`);
     } finally {
       navigate("/");
@@ -37,7 +39,6 @@ const AirplaneGeneralGame = () => {
     window.location.reload();
   };
 
-  // --- TAMPILAN MENU (BALIK LAGI!) ---
   if (gameState === "menu") {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]">
@@ -77,16 +78,22 @@ const AirplaneGeneralGame = () => {
     );
   }
 
-  // --- TAMPILAN GAMEPLAY ---
   return (
     <div className="min-h-screen bg-slate-800 flex items-center justify-center p-4 select-none">
       <div className="relative rounded-xl shadow-2xl">
-        <GameCanvas
-          width={CANVAS_WIDTH}
-          height={CANVAS_HEIGHT}
-          player={player}
-          clouds={clouds}
-        />
+        <div
+          className="relative rounded-xl overflow-hidden cursor-none"
+          style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
+          onMouseMove={handleMouseMove}
+        >
+          <GameCanvas
+            width={CANVAS_WIDTH}
+            height={CANVAS_HEIGHT}
+            player={player}
+            clouds={clouds}
+            onMouseMove={handleMouseMove}
+          />
+        </div>
 
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
           <div className="flex justify-between items-start p-6">
@@ -124,9 +131,11 @@ const AirplaneGeneralGame = () => {
           </div>
         </div>
 
+        {/* Pause Modal */}
         {gameState === "paused" && (
           <PauseModal onResume={resumeGame} onExit={handleExit} />
         )}
+        {/* Game Over Modal */}
         {gameState === "gameover" && (
           <GameOverModal
             score={score}

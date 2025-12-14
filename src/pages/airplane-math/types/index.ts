@@ -1,4 +1,4 @@
-export type GameStatus = "playing" | "paused" | "gameover";
+export type GameStatus = "menu" | "playing" | "paused" | "gameover";
 
 export interface Entity {
   x: number;
@@ -23,6 +23,7 @@ export interface MathQuestion {
 
 export interface GameState {
   status: GameStatus;
+  gameMode?: "math" | "general";
   score: number;
   lives: number;
   currentQuestion: MathQuestion | null;
