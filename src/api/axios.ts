@@ -11,7 +11,7 @@ api.interceptors.request.use(
     const token = useAuthStore.getState().token;
     const url = config.url || "";
     const isPublicRequest = [
-      "/api/game", // list games (public, optional auth)
+      // "/api/game", // list games (public, optional auth) // causing trouble in the liking system
       "/api/game/template", // templates are public
       "/play/public", // public play endpoints
       "/leaderboard",
