@@ -15,6 +15,10 @@ import ProtectedRoute from "./routes/ProtectedRoutes";
 import CreateAnagram from "./pages/Anagram/CreateAnagram";
 import PlayAnagram from "./pages/Anagram/PlayAnagram";
 import EditAnagram from "./pages/Anagram/EditAnagram";
+import PlayUnjumble from "./pages/unjumble/PlayUnjumble";
+import CreateUnjumble from "./pages/unjumble/CreateUnjumble";
+import EditUnjumble from "./pages/unjumble/EditUnjumble";
+
 import MazeChase from "./pages/maze-chase/MazeChase";
 import CreateMazeChase from "./pages/maze-chase/CreateMazeChase";
 import EditMazeChase from "./pages/maze-chase/EditMazeChase";
@@ -56,6 +60,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
+        <Route path="/unjumble/play/:id" element={<PlayUnjumble />} />
         <Route path="/open-the-box/play/:id" element={<OpenTheBoxGame />} />
 
         <Route path="/create-open-the-box" element={<CreateOpenTheBox />} />
@@ -115,6 +120,10 @@ function App() {
           />
           <Route path="/maze-chase/edit/:id" element={<EditMazeChase />} />
           <Route path="/anagram/edit/:id" element={<EditAnagram />} />
+
+          <Route path="/create-unjumble" element={<CreateUnjumble />} />
+          <Route path="/unjumble/edit/:id" element={<EditUnjumble />} />
+
           <Route path="/create-true-or-false" element={<CreateTrueOrFalse />} />
           <Route path="/true-or-false/edit/:id" element={<EditTrueOrFalse />} />
           <Route
