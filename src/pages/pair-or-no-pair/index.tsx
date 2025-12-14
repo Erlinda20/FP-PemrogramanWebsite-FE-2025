@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import api from "@/api/axios";
+import { useAuthStore } from "@/store/useAuthStore";
 import catImage from "./images/cat_image_1765100975047.png";
 import dogImage from "./images/dog_image_1765100992258.png";
 import appleImage from "./images/apple_image_1765101007846.png";
@@ -27,6 +28,7 @@ interface GridCardData {
   isShaking?: boolean;
 }
 
+//cek gambar
 const isImageUrl = (content: string) => {
   if (!content || typeof content !== "string") return false;
   const trimmed = content.trim();
@@ -50,40 +52,49 @@ const useSoundEffects = (isSoundOn: boolean) => {
   const winAudioRef = useRef<HTMLAudioElement | null>(null);
   const flipAudioRef = useRef<HTMLAudioElement | null>(null);
   const matchAudioRef = useRef<HTMLAudioElement | null>(null);
-
   useEffect(() => {
-    // Intro
-    introAudioRef.current = new Audio(
-      new URL("./audio/kahoot-lobby.mp3", import.meta.url).href,
-    );
-    introAudioRef.current.loop = true;
-    introAudioRef.current.volume = 0.5;
+    try {
+      // Intro
+      introAudioRef.current = new Audio(
+        new URL("./audio/kahoot-lobby.mp3", import.meta.url).href,
+      );
+      introAudioRef.current.loop = true;
+      introAudioRef.current.volume = 0.5;
+      introAudioRef.current.preload = "auto";
 
-    // Game BGM
-    gameAudioRef.current = new Audio(
-      new URL("./audio/happy-day.mp3", import.meta.url).href,
-    );
-    gameAudioRef.current.loop = true;
-    gameAudioRef.current.volume = 0.5;
+      // Game BGM
+      gameAudioRef.current = new Audio(
+        new URL("./audio/happy-day.mp3", import.meta.url).href,
+      );
+      gameAudioRef.current.loop = true;
+      gameAudioRef.current.volume = 0.5;
+      gameAudioRef.current.preload = "auto";
 
-    // Win sound
-    winAudioRef.current = new Audio(
-      "https://www.myinstants.com/media/sounds/final-fantasy-vii-victory-fanfare-1.mp3",
-    );
+      // Win sound
+      winAudioRef.current = new Audio(
+        "https://www.myinstants.com/media/sounds/final-fantasy-vii-victory-fanfare-1.mp3",
+      );
+      winAudioRef.current.preload = "auto";
 
-    // SFX
-    flipAudioRef.current = new Audio(
-      "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3",
-    ); // Flip sfx
-    matchAudioRef.current = new Audio(
-      "https://assets.mixkit.co/active_storage/sfx/270/270-preview.mp3",
-    ); // Ding sfx
+      // SFX
+      flipAudioRef.current = new Audio(
+        "https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3",
+      ); // Flip sfx
+      flipAudioRef.current.preload = "auto";
+      
+      matchAudioRef.current = new Audio(
+        "https://assets.mixkit.co/active_storage/sfx/270/270-preview.mp3",
+      ); // Ding sfx
+      matchAudioRef.current.preload = "auto";
 
-    return () => {
-      introAudioRef.current?.pause();
-      gameAudioRef.current?.pause();
-      winAudioRef.current?.pause();
-    };
+      return () => {
+        introAudioRef.current?.pause();
+        gameAudioRef.current?.pause();
+        winAudioRef.current?.pause();
+      };
+    } catch (error) {
+      console.error("Error initializing audio:", error);
+    }
   }, []);
 
   useEffect(() => {
@@ -94,18 +105,44 @@ const useSoundEffects = (isSoundOn: boolean) => {
   }, [isSoundOn]);
 
   const playIntroBGM = () => {
+    if (!isSoundOn) return;
     gameAudioRef.current?.pause();
-    introAudioRef.current?.play().catch(() => {});
+    if (introAudioRef.current) {
+      introAudioRef.current.currentTime = 0;
+      introAudioRef.current.play().catch((err) => {
+        console.error("Error playing intro BGM:", err);
+        // Try to unlock audio context
+        if (err.name === 'NotAllowedError') {
+          console.warn("Audio autoplay blocked. User interaction required.");
+        }
+      });
+    }
   };
 
   const playGameBGM = () => {
+    if (!isSoundOn) return;
     introAudioRef.current?.pause();
-    gameAudioRef.current?.play().catch(() => {});
+    if (gameAudioRef.current) {
+      gameAudioRef.current.currentTime = 0;
+      gameAudioRef.current.play().catch((err) => {
+        console.error("Error playing game BGM:", err);
+        // Try to unlock audio context
+        if (err.name === 'NotAllowedError') {
+          console.warn("Audio autoplay blocked. User interaction required.");
+        }
+      });
+    }
   };
 
   const playWin = () => {
+    if (!isSoundOn) return;
     gameAudioRef.current?.pause();
-    winAudioRef.current?.play().catch(() => {});
+    if (winAudioRef.current) {
+      winAudioRef.current.currentTime = 0;
+      winAudioRef.current.play().catch((err) => {
+        console.error("Error playing win sound:", err);
+      });
+    }
   };
 
   const playFlip = () => {
@@ -140,6 +177,33 @@ const useSoundEffects = (isSoundOn: boolean) => {
     osc.stop(ctx.currentTime + 0.3);
   };
 
+  const unlockAudio = () => {
+    const audioElements = [
+      introAudioRef.current,
+      gameAudioRef.current,
+      winAudioRef.current,
+    ].filter(Boolean) as HTMLAudioElement[];
+
+    audioElements.forEach((audio) => {
+      if (audio) {
+        audio.volume = 0.01; 
+        audio.play()
+          .then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            if (audio === introAudioRef.current || audio === gameAudioRef.current) {
+              audio.volume = isSoundOn ? 0.3 : 0;
+            } else if (audio === winAudioRef.current) {
+              audio.volume = isSoundOn ? 0.4 : 0;
+            }
+          })
+          .catch((err) => {
+            console.log("Audio unlock attempt:", err);
+          });
+      }
+    });
+  };
+
   return {
     playIntroBGM,
     playGameBGM,
@@ -147,6 +211,7 @@ const useSoundEffects = (isSoundOn: boolean) => {
     playFlip,
     playMatch,
     playMismatch,
+    unlockAudio,
   };
 };
 
@@ -162,7 +227,7 @@ const GridCard = ({
 
   return (
     <div
-      className={`relative w-full h-full aspect-[3/4] max-h-[18vh] cursor-pointer perspective-1000 ${
+      className={`relative w-full h-full aspect-3/4 max-h-[18vh] cursor-pointer perspective-1000 ${
         card.isShaking ? "animate-shake" : ""
       } ${
         card.isMatched
@@ -183,7 +248,7 @@ const GridCard = ({
       >
         {/* Back of Card (Shown when NOT flipped) - LOGO/PATTERN */}
         <div
-          className="absolute inset-0 w-full h-full bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center backface-hidden shadow-inner"
+          className="absolute inset-0 w-full h-full bg-linear-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center backface-hidden shadow-inner"
           style={{ backfaceVisibility: "hidden" }}
         >
           <div className="text-white text-4xl font-bold opacity-30 select-none">
@@ -204,7 +269,7 @@ const GridCard = ({
               className="w-full h-full object-contain p-2"
             />
           ) : (
-            <div className="text-center p-2 font-bold text-slate-800 text-sm sm:text-base md:text-lg break-words">
+            <div className="text-center p-2 font-bold text-slate-800 text-sm sm:text-base md:text-lg wrap-break-word">
               {card.content}
             </div>
           )}
@@ -217,8 +282,8 @@ const GridCard = ({
 // --- START SCREEN ---
 const IntroScreen = ({ onStart }: { onStart: () => void }) => {
   return (
-    <div className="absolute inset-0 z-50 bg-gradient-to-br from-slate-900 to-blue-900 flex flex-col items-center justify-center p-4 text-center">
-      <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-teal-400 mb-6 drop-shadow-2xl animate-bounce-slow">
+    <div className="absolute inset-0 z-50 bg-linear-to-br from-slate-900 to-blue-900 flex flex-col items-center justify-center p-4 text-center">
+      <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-teal-400 mb-6 drop-shadow-2xl animate-bounce-slow">
         Matching Pair
       </h1>
       <p className="text-slate-300 text-lg md:text-xl mb-12 max-w-lg">
@@ -239,9 +304,11 @@ const IntroScreen = ({ onStart }: { onStart: () => void }) => {
 const CompletedScreen = ({
   score,
   onRestart,
+  gameId,
 }: {
   score: number;
   onRestart: () => void;
+  gameId?: string;
 }) => {
   return (
     <div className="absolute inset-0 z-50 bg-[#0f172a] flex flex-col items-center justify-center p-4 overflow-hidden">
@@ -250,7 +317,7 @@ const CompletedScreen = ({
         <div className="w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
       </div>
 
-      <h2 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500 mb-8 z-10 animate-bounce">
+      <h2 className="text-6xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 to-orange-500 mb-8 z-10 animate-bounce">
         COMPLETED!
       </h2>
 
@@ -261,12 +328,22 @@ const CompletedScreen = ({
         <p className="text-6xl font-mono font-bold text-white">{score}</p>
       </div>
 
-      <button
-        onClick={onRestart}
-        className="z-10 px-8 py-3 bg-green-500 hover:bg-green-400 text-white font-bold rounded-full text-lg shadow-lg transition-all transform hover:scale-105 active:scale-95"
-      >
-        PLAY AGAIN
-      </button>
+      <div className="flex gap-4 z-10">
+        <button
+          onClick={onRestart}
+          className="px-8 py-3 bg-green-500 hover:bg-green-400 text-white font-bold rounded-full text-lg shadow-lg transition-all transform hover:scale-105 active:scale-95"
+        >
+          PLAY AGAIN
+        </button>
+        {gameId && (
+          <Link
+            to={`/pair-or-no-pair/leaderboard/${gameId}`}
+            className="px-8 py-3 bg-blue-500 hover:bg-blue-400 text-white font-bold rounded-full text-lg shadow-lg transition-all transform hover:scale-105 active:scale-95"
+          >
+            🏆 LEADERBOARD
+          </Link>
+        )}
+      </div>
     </div>
   );
 };
@@ -286,6 +363,10 @@ const PairOrNoPairGame = () => {
   const [flippedIndices, setFlippedIndices] = useState<number[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSoundOn, setIsSoundOn] = useState(true);
+  const [combo, setCombo] = useState(0);
+  const [maxCombo, setMaxCombo] = useState(0);
+  const [showComboAnimation, setShowComboAnimation] = useState(false);
+  const scoreSaved = useRef(false);
 
   // Audio Hooks
   const {
@@ -295,6 +376,7 @@ const PairOrNoPairGame = () => {
     playFlip,
     playMatch,
     playMismatch,
+    unlockAudio,
   } = useSoundEffects(isSoundOn);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const playCountUpdated = useRef(false);
@@ -330,13 +412,51 @@ const PairOrNoPairGame = () => {
     fetchGameData();
   }, [gameId]);
 
+  // Unlock audio on first user interaction (click anywhere on page)
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (isSoundOn) {
+        unlockAudio();
+      }
+      // Remove listeners after first interaction
+      document.removeEventListener("click", handleFirstInteraction);
+      document.removeEventListener("touchstart", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+    };
+
+    document.addEventListener("click", handleFirstInteraction, { once: true });
+    document.addEventListener("touchstart", handleFirstInteraction, { once: true });
+    document.addEventListener("keydown", handleFirstInteraction, { once: true });
+
+    return () => {
+      document.removeEventListener("click", handleFirstInteraction);
+      document.removeEventListener("touchstart", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Audio Logic
   useEffect(() => {
-    if (gameState === "intro") playIntroBGM();
-    else if (gameState === "playing") playGameBGM();
-    else if (gameState === "finished") playWin();
+    if (gameState === "intro") {
+      // Small delay to ensure audio is ready
+      const timer = setTimeout(() => {
+        playIntroBGM();
+      }, 500);
+      return () => clearTimeout(timer);
+    } else if (gameState === "playing") {
+      const timer = setTimeout(() => {
+        playGameBGM();
+      }, 500);
+      return () => clearTimeout(timer);
+    } else if (gameState === "finished") {
+      const timer = setTimeout(() => {
+        playWin();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState]);
+  }, [gameState, isSoundOn]);
 
   // Timer Logic
   useEffect(() => {
@@ -352,6 +472,16 @@ const PairOrNoPairGame = () => {
 
   // Start Game Logic
   const handleStart = () => {
+    // Unlock audio context on user interaction (browser autoplay policy)
+    // This ensures audio works when user clicks START button
+    if (isSoundOn) {
+      unlockAudio();
+      // Small delay to ensure audio context is unlocked before playing
+      setTimeout(() => {
+        // Audio will be played by the useEffect when gameState changes
+      }, 100);
+    }
+    
     // Reset play count flag when starting a new game
     playCountUpdated.current = false;
 
@@ -392,7 +522,10 @@ const PairOrNoPairGame = () => {
     setCards(generatedCards);
     setScore(0);
     setTimer(0);
+    setCombo(0);
+    setMaxCombo(0);
     setGameState("playing");
+    scoreSaved.current = false;
   };
 
   // Card Click
@@ -431,7 +564,28 @@ const PairOrNoPairGame = () => {
             updated[idx2].isMatched = true;
             return updated;
           });
-          setScore((s) => s + 100);
+          
+          // Combo system: increase combo on match
+          setCombo((prevCombo) => {
+            const newCombo = prevCombo + 1;
+            setMaxCombo((prevMax) => Math.max(prevMax, newCombo));
+            
+            // Show combo animation if combo >= 2
+            if (newCombo >= 2) {
+              setShowComboAnimation(true);
+              setTimeout(() => setShowComboAnimation(false), 1000);
+            }
+            
+            // Calculate score with combo multiplier
+            // Base score: 100, multiplied by combo (min 1x)
+            const baseScore = 100;
+            const comboMultiplier = Math.max(1, newCombo);
+            const pointsEarned = baseScore * comboMultiplier;
+            
+            setScore((s) => s + pointsEarned);
+            return newCombo;
+          });
+          
           setFlippedIndices([]);
           setIsProcessing(false);
         }, 500);
@@ -458,6 +612,8 @@ const PairOrNoPairGame = () => {
             updated[idx2].isShaking = false;
             return updated;
           });
+          // Reset combo on mismatch
+          setCombo(0);
           setFlippedIndices([]);
           setIsProcessing(false);
         }, 1200);
@@ -488,6 +644,35 @@ const PairOrNoPairGame = () => {
           // Don't show error toast as it's not critical
         });
     }
+  }, [gameState, gameId]);
+
+  // Save score when game is finished
+  useEffect(() => {
+    if (gameState === "finished" && gameId && !scoreSaved.current) {
+      scoreSaved.current = true;
+      const token = useAuthStore.getState().token;
+      
+      if (token) {
+        // Calculate matched pairs
+        const matchedPairs = cards.filter((c) => c.isMatched).length / 2;
+        const totalPairs = cards.length / 2;
+        
+        api
+          .post("/api/game/score", {
+            game_id: gameId,
+            score: score,
+            max_combo: maxCombo,
+            time_taken: timer,
+            matched_pairs: matchedPairs,
+            total_pairs: totalPairs,
+          })
+          .catch((err) => {
+            console.error("Failed to save score:", err);
+            // Don't show error toast as it's not critical
+          });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameState, gameId]);
 
   const formatTime = (s: number) => {
@@ -558,7 +743,7 @@ const PairOrNoPairGame = () => {
 
       {gameState === "intro" && <IntroScreen onStart={handleStart} />}
       {gameState === "finished" && (
-        <CompletedScreen score={score} onRestart={handleStart} />
+        <CompletedScreen score={score} onRestart={handleStart} gameId={gameId} />
       )}
 
       {gameState === "playing" && (
@@ -575,14 +760,39 @@ const PairOrNoPairGame = () => {
               <div className="bg-orange-100 px-4 py-1 rounded-full border border-orange-200 text-orange-600">
                 Score: {score}
               </div>
+              {combo >= 2 && (
+                <div className="bg-linear-to-r from-yellow-400 to-orange-500 px-4 py-1 rounded-full border-2 border-orange-300 text-white shadow-lg animate-pulse">
+                  🔥 {combo}x COMBO!
+                </div>
+              )}
             </div>
-            <button
-              onClick={() => setIsSoundOn(!isSoundOn)}
-              className="p-2 rounded-full hover:bg-slate-100 border-2 border-slate-300 transition-colors"
-            >
-              <span className="text-xl">{isSoundOn ? "🔊" : "🔇"}</span>
-            </button>
+            <div className="flex gap-2 items-center">
+              {gameId && (
+                <Link
+                  to={`/pair-or-no-pair/leaderboard/${gameId}`}
+                  className="px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-bold rounded-full text-sm shadow-lg transition-all transform hover:scale-105"
+                  title="View Leaderboard"
+                >
+                  🏆
+                </Link>
+              )}
+              <button
+                onClick={() => setIsSoundOn(!isSoundOn)}
+                className="p-2 rounded-full hover:bg-slate-100 border-2 border-slate-300 transition-colors"
+              >
+                <span className="text-xl">{isSoundOn ? "🔊" : "🔇"}</span>
+              </button>
+            </div>
           </div>
+
+          {/* Combo Animation Overlay */}
+          {showComboAnimation && combo >= 2 && (
+            <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center">
+              <div className="text-8xl font-black text-transparent bg-clip-text bg-linear-to-r from-yellow-400 via-orange-500 to-red-500 animate-bounce drop-shadow-2xl">
+                {combo}x COMBO!
+              </div>
+            </div>
+          )}
 
           {/* Grid Container */}
           <div className="flex-1 overflow-hidden p-4 flex items-center justify-center">

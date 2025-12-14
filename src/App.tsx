@@ -22,6 +22,7 @@ import EditAnagram from "./pages/Anagram/EditAnagram";
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
 import EditPairOrNoPair from "./pages/pair-or-no-pair/edit";
+import Leaderboard from "./pages/pair-or-no-pair/Leaderboard";
 import RedirectPlayRoute from "./pages/RedirectPlayRoute";
 
 function App() {
@@ -42,6 +43,14 @@ function App() {
         <Route
           path="/matching-pair/play/:gameId"
           element={<PairOrNoPairGame />}
+        />
+        <Route
+          path="/pair-or-no-pair/leaderboard/:gameId"
+          element={<Leaderboard />}
+        />
+        <Route
+          path="/matching-pair/leaderboard/:gameId"
+          element={<Leaderboard />}
         />
 
         <Route element={<ProtectedRoute />}>
