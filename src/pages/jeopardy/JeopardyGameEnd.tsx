@@ -99,13 +99,12 @@ export default function JeopardyGameEnd() {
 
         <CardFooter className="flex gap-4 justify-center pt-6 border-t border-slate-800">
           <Button
-            variant="outline"
-            className="gap-2"
+            variant="default" // Changed from "outline" to "default" for better contrast
+            className="gap-2 bg-yellow-400 text-blue-900 hover:bg-yellow-300 font-bold" // Explicit colors
             onClick={() => navigate("/")}
           >
             <Home className="w-4 h-4" /> Return Home
           </Button>
-          {/* Optional: Play Again logic would require resetting state */}
         </CardFooter>
       </Card>
     </div>

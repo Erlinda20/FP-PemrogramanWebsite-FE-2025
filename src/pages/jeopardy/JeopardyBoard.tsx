@@ -182,14 +182,19 @@ export default function JeopardyBoard() {
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => {
-              // Simple "Next Round" or "Exit" logic
+            onClick={async () => {
               if (currentRoundIndex < gameData.rounds.length - 1) {
                 setCurrentRoundIndex((prev) => prev + 1);
               } else {
-                // End Game
                 if (confirm("End game and see results?")) {
-                  // Navigate to the End Page and PASS THE TEAMS data
+                  try {
+                    // 1. Tell Backend to increment play count
+                    await jeopardyApi.endGame(id!);
+                  } catch (err) {
+                    console.error("Failed to record game end", err);
+                  }
+
+                  // 2. Navigate to Results
                   navigate(`/jeopardy/play/${id}/end`, {
                     state: { teams },
                   });

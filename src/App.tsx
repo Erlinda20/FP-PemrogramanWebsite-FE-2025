@@ -11,7 +11,6 @@ import Register from "./pages/Register";
 import Sandbox from "./pages/Sandbox";
 import CreateSpeedSorting from "./pages/speed-sorting/CreateSpeedSorting";
 import EditSpeedSorting from "./pages/speed-sorting/EditSpeedSorting";
-import SpeedSorting from "./pages/speed-sorting/SpeedSorting";
 import ProtectedRoute from "./routes/ProtectedRoutes";
 import CreateAnagram from "./pages/Anagram/CreateAnagram";
 import PlayAnagram from "./pages/Anagram/PlayAnagram";
@@ -19,14 +18,24 @@ import EditAnagram from "./pages/Anagram/EditAnagram";
 import MazeChase from "./pages/maze-chase/MazeChase";
 import CreateMazeChase from "./pages/maze-chase/CreateMazeChase";
 import EditMazeChase from "./pages/maze-chase/EditMazeChase";
+
+import OpenTheBoxGame from "./pages/open-the-box";
+import CreateOpenTheBox from "./pages/open-the-box/createOpenTheBox";
+import EditOpenTheBox from "./pages/open-the-box/editOpenTheBox";
+
 // 📌 TAMBAHAN 1: Import Komponen Game Pair or No Pair
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
+import CreateTrueOrFalse from "./pages/true-or-false/CreateTrueOrFalse";
+import EditTrueOrFalse from "./pages/true-or-false/EditTrueOrFalse";
+import PlayTrueOrFalse from "./pages/true-or-false/TrueOrFalse";
 import EditPairOrNoPair from "./pages/pair-or-no-pair/edit";
 
 import CreateSlidingPuzzle from "./pages/sliding-puzzle/CreateSlidingPuzzle";
 import EditSlidingPuzzle from "./pages/sliding-puzzle/EditSlidingPuzzle";
 import PlaySlidingPuzzle from "./pages/sliding-puzzle/PlaySlidingPuzzle";
+
+// Import Komponen Game Whack-a-Mole
 import CreateFlipTiles from "./pages/flip-tiles/CreateFlipTiles";
 import EditFlipTiles from "./pages/flip-tiles/EditFlipTiles";
 import FlipTiles from "./pages/flip-tiles/FlipTiles";
@@ -36,6 +45,7 @@ import EditTypeTheAnswer from "./pages/EditTypeTheAnswer";
 import WhackAMoleGame from "./pages/whack-a-mole";
 import CreateWhackAMole from "./pages/whack-a-mole/create";
 import EditWhackAMole from "./pages/whack-a-mole/edit";
+import SpeedSorting from "./pages/speed-sorting/SpeedSorting";
 
 import CreateJeopardy from "./pages/jeopardy/CreateJeopardy";
 import JeopardyLobby from "./pages/jeopardy/JeopardyLobby";
@@ -51,6 +61,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
+        <Route path="/open-the-box/play/:id" element={<OpenTheBoxGame />} />
+
+        <Route path="/create-open-the-box" element={<CreateOpenTheBox />} />
+
         <Route path="/type-the-answer/play/:id" element={<TypeTheAnswer />} />
         <Route path="/maze-chase/play/:id" element={<MazeChase />} />
         <Route path="/flip-tiles/play/:id" element={<FlipTiles />} />
@@ -60,6 +74,7 @@ function App() {
           path="/pair-or-no-pair/play/:gameId"
           element={<PairOrNoPairGame />}
         />
+        <Route path="/true-or-false/play/:id" element={<PlayTrueOrFalse />} />
         <Route path="/whack-a-mole/play/:gameId" element={<WhackAMoleGame />} />
         <Route
           path="/sliding-puzzle/play/:id"
@@ -109,6 +124,8 @@ function App() {
           />
           <Route path="/maze-chase/edit/:id" element={<EditMazeChase />} />
           <Route path="/anagram/edit/:id" element={<EditAnagram />} />
+          <Route path="/create-true-or-false" element={<CreateTrueOrFalse />} />
+          <Route path="/true-or-false/edit/:id" element={<EditTrueOrFalse />} />
           <Route
             path="/create-sliding-puzzle"
             element={<CreateSlidingPuzzle />}
@@ -118,6 +135,10 @@ function App() {
             element={<EditSlidingPuzzle />}
           />
           <Route path="/jeopardy/edit/:id" element={<CreateJeopardy />} />
+          <Route element={<ProtectedRoute />}>
+            {/* ...route lain... */}
+            <Route path="/open-the-box/edit/:id" element={<EditOpenTheBox />} />
+          </Route>
         </Route>
       </Routes>
     </>

@@ -25,4 +25,6 @@ export const jeopardyApi = {
   submitPlayCount: async (id: string) => {
     return await api.post(`/api/game/play-count`, { game_id: id });
   },
+
+  endGame: (id: string) => api.post(`/api/game/game-type/jeopardy/${id}/end`),
 };
