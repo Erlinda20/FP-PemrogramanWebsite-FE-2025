@@ -26,6 +26,9 @@ import EditOpenTheBox from "./pages/open-the-box/editOpenTheBox";
 // 📌 TAMBAHAN 1: Import Komponen Game Pair or No Pair
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
+import CreateTrueOrFalse from "./pages/true-or-false/CreateTrueOrFalse";
+import EditTrueOrFalse from "./pages/true-or-false/EditTrueOrFalse";
+import PlayTrueOrFalse from "./pages/true-or-false/TrueOrFalse";
 import EditPairOrNoPair from "./pages/pair-or-no-pair/edit";
 
 import CreateSlidingPuzzle from "./pages/sliding-puzzle/CreateSlidingPuzzle";
@@ -66,6 +69,7 @@ function App() {
           path="/pair-or-no-pair/play/:gameId"
           element={<PairOrNoPairGame />}
         />
+        <Route path="/true-or-false/play/:id" element={<PlayTrueOrFalse />} />
         <Route path="/whack-a-mole/play/:gameId" element={<WhackAMoleGame />} />
         <Route
           path="/sliding-puzzle/play/:id"
@@ -111,6 +115,8 @@ function App() {
           />
           <Route path="/maze-chase/edit/:id" element={<EditMazeChase />} />
           <Route path="/anagram/edit/:id" element={<EditAnagram />} />
+          <Route path="/create-true-or-false" element={<CreateTrueOrFalse />} />
+          <Route path="/true-or-false/edit/:id" element={<EditTrueOrFalse />} />
           <Route
             path="/create-sliding-puzzle"
             element={<CreateSlidingPuzzle />}
