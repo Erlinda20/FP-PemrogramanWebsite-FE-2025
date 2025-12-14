@@ -36,3 +36,5 @@ export interface AudioState {
   bgm: boolean;
   sfx: boolean;
 }
+
+export type MathQuestion = GeneralQuestion;
