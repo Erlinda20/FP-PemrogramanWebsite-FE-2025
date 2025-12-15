@@ -32,7 +32,8 @@ type Project = {
   description: string;
   thumbnail_image: string | null;
   is_published: boolean;
-  game_template: string;
+  game_template_name: string;
+  game_template_slug: string;
 };
 
 export default function MyProjectsPage() {
@@ -57,14 +58,12 @@ export default function MyProjectsPage() {
     fetchProjects();
   }, []);
 
-  const handleDeleteProject = async (projectId: string, gameTemplate: string) => {
+  const handleDeleteProject = async (
+    projectTemplate: string,
+    projectId: string,
+  ) => {
     try {
-      const endpoint = gameTemplate === "Quiz" 
-        ? `/api/game/game-type/quiz/${projectId}`
-        : gameTemplate === "Matching Pair"
-        ? `/api/game/game-type/matching-pair/${projectId}`
-        : `/api/game/game-type/quiz/${projectId}`; // fallback
-      await api.delete(endpoint);
+      await api.delete(`/api/game/game-type/${projectTemplate}/${projectId}`);
       setProjects((prev) => prev.filter((p) => p.id !== projectId));
       toast.success("Project deleted successfully!");
     } catch (err) {
@@ -73,17 +72,16 @@ export default function MyProjectsPage() {
     }
   };
 
-  const handleUpdateStatus = async (gameId: string, isPublish: boolean, gameTemplate: string) => {
+  const handleUpdateStatus = async (
+    projectTemplate: string,
+    gameId: string,
+    isPublish: boolean,
+  ) => {
     try {
       const form = new FormData();
-      form.append("is_publish_immediately", String(isPublish));
+      form.append("is_publish", String(isPublish));
 
-      const endpoint = gameTemplate === "Quiz" 
-        ? `/api/game/game-type/quiz/${gameId}`
-        : gameTemplate === "Matching Pair"
-        ? `/api/game/game-type/matching-pair/${gameId}`
-        : `/api/game/game-type/quiz/${gameId}`; // fallback
-      await api.patch(endpoint, form);
+      await api.patch(`/api/game/game-type/${projectTemplate}/${gameId}`, form);
 
       setProjects((prev) =>
         prev.map((p) =>
@@ -195,11 +193,15 @@ export default function MyProjectsPage() {
                       size="sm"
                       className="h-7"
                       onClick={() => {
-                        if (project.game_template === "Quiz") {
-                          navigate(`/quiz/play/${project.id}`);
-                        } else if (project.game_template === "Matching Pair") {
-                          navigate(`/matching-pair/play/${project.id}`);
+                        if (!project.game_template_slug) {
+                          toast.error(
+                            "Game template not found. Cannot play this game.",
+                          );
+                          return;
                         }
+                        navigate(
+                          `/${project.game_template_slug}/play/${project.id}`,
+                        );
                       }}
                     >
                       <Play />
@@ -211,11 +213,9 @@ export default function MyProjectsPage() {
                     size="sm"
                     className="h-7"
                     onClick={() => {
-                      if (project.game_template === "Quiz") {
-                        navigate(`/quiz/edit/${project.id}`);
-                      } else if (project.game_template === "Matching Pair") {
-                        navigate(`/matching-pair/edit/${project.id}`);
-                      }
+                      navigate(
+                        `/${project.game_template_slug}/edit/${project.id}`,
+                      );
                     }}
                   >
                     <Edit />
@@ -227,7 +227,11 @@ export default function MyProjectsPage() {
                       size="sm"
                       className="h-7"
                       onClick={() => {
-                        handleUpdateStatus(project.id, false, project.game_template);
+                        handleUpdateStatus(
+                          project.game_template_slug,
+                          project.id,
+                          false,
+                        );
                       }}
                     >
                       <EyeOff />
@@ -239,7 +243,11 @@ export default function MyProjectsPage() {
                       size="sm"
                       className="h-7"
                       onClick={() => {
-                        handleUpdateStatus(project.id, true, project.game_template);
+                        handleUpdateStatus(
+                          project.game_template_slug,
+                          project.id,
+                          true,
+                        );
                       }}
                     >
                       <Eye />
@@ -273,7 +281,10 @@ export default function MyProjectsPage() {
                         <AlertDialogAction
                           className="bg-red-600 hover:bg-red-700"
                           onClick={() => {
-                            handleDeleteProject(project.id, project.game_template);
+                            handleDeleteProject(
+                              project.game_template_slug,
+                              project.id,
+                            );
                           }}
                         >
                           Yes, Delete

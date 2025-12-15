@@ -59,10 +59,8 @@ export default function CreateProject() {
   }, []);
 
   const handleTemplateClick = (template: GameTemplate) => {
-    if (template.slug === "quiz") {
-      navigate("/create-quiz");
-    } else if (template.slug === "matching-pair") {
-      navigate("/create-matching-pair");
+    if (template.slug) {
+      navigate(`/create-${template.slug}`);
     } else {
       toast.error(`${template.name} template is coming soon!`, {
         duration: 3000,
@@ -128,7 +126,7 @@ export default function CreateProject() {
                   onClick={() => handleTemplateClick(template)}
                 >
                   <div className="flex items-start gap-5">
-                    <div className="w-16 h-16 bg-sky-100 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-sky-200 transition-colors">
+                    <div className="w-16 h-16 bg-sky-100 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-sky-200 transition-colors">
                       <IconComponent className="w-8 h-8 text-sky-600" />
                     </div>
                     <div className="pt-1">

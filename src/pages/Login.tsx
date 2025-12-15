@@ -5,7 +5,6 @@ import { AxiosError } from "axios";
 import api from "@/api/axios";
 import { useAuthStore } from "@/store/useAuthStore";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -74,11 +73,6 @@ export default function LoginPage() {
     <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-[#B8D4FF] to-[#FFEEB2] p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="items-center pt-8">
-          <Avatar className="mx-auto size-16">
-            <AvatarImage src="/logo.png" alt="Logo Perusahaan" />
-            <AvatarFallback className="text-3xl">🐱</AvatarFallback>
-          </Avatar>
-
           <Typography variant="h4" className="text-center !font-bold mt-2">
             Welcome Back!
           </Typography>
