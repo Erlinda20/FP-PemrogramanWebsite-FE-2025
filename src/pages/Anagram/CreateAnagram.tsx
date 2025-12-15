@@ -202,16 +202,16 @@ const CreateAnagram = () => {
       console.log("=== SENDING TO BACKEND ===");
 
       // BACKEND FETCH
-      const response = await fetch(
-        "http://localhost:4000/api/game/game-type/anagram",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
+
+      const baseURL = import.meta.env.VITE_API_URL;
+
+      const response = await fetch(`${baseURL}/api/game/game-type/anagram`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: formData,
+      });
 
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.indexOf("application/json") === -1) {

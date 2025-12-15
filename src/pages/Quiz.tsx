@@ -62,9 +62,8 @@ function Quiz() {
           `/api/game/game-type/quiz/${id}/play/public`,
         );
         setQuiz(response.data.data);
-      } catch (err) {
+      } catch {
         setError("Failed to load quiz.");
-        console.error(err);
         toast.error("Failed to load quiz.");
       } finally {
         setLoading(false);
@@ -79,8 +78,7 @@ function Quiz() {
       await api.post("/api/game/play-count", {
         game_id: gameId,
       });
-    } catch (err) {
-      console.error("Failed to update play count:", err);
+    } catch {
       toast.error("Failed to update play count.");
     }
   };
@@ -99,8 +97,7 @@ function Quiz() {
       await addPlayCount(id!);
 
       setFinished(true);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Failed to submit quiz.");
     } finally {
       setLoading(false);

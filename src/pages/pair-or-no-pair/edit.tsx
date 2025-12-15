@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
@@ -20,7 +20,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import type { AxiosError } from "axios";
 import api from "@/api/axios";
 
 interface PairItem {
@@ -29,15 +28,16 @@ interface PairItem {
 }
 
 interface ApiItem {
-  left_content: string;
-  right_content: string;
+  id?: string;
+  left_content?: string;
+  right_content?: string;
 }
 
 function EditPairOrNoPair() {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<File | null>(null);
@@ -51,11 +51,9 @@ function EditPairOrNoPair() {
     isPublishImmediately: false,
   });
 
+  // Fetch existing game data
   useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
+    if (!id) return setLoading(false);
 
     const fetchGame = async () => {
       setLoading(true);
@@ -65,36 +63,46 @@ function EditPairOrNoPair() {
 
         setTitle(data.name || "");
         setDescription(data.description || "");
-        setSettings({
-          isPublishImmediately: data.is_published || false,
-        });
 
         if (data.thumbnail_image) {
           setThumbnailPreview(
             `${import.meta.env.VITE_API_URL}/${data.thumbnail_image}`,
           );
+        } else {
+          setThumbnailPreview(null);
         }
+        setThumbnail(null);
 
-        // Load items if available
-        if (data.items && Array.isArray(data.items) && data.items.length > 0) {
-          setItems(
-            data.items.map((item: ApiItem) => ({
-              leftContent: item.left_content || "",
-              rightContent: item.right_content || "",
-            })),
-          );
-        }
+        // Map API items to component state
+        const mappedItems: PairItem[] = (data.items || []).map(
+          (item: ApiItem) => ({
+            leftContent: item.left_content || "",
+            rightContent: item.right_content || "",
+          }),
+        );
+
+        setItems(
+          mappedItems.length >= 2
+            ? mappedItems
+            : [
+                { leftContent: "", rightContent: "" },
+                { leftContent: "", rightContent: "" },
+              ],
+        );
+
+        setSettings({
+          isPublishImmediately: !!data.is_published,
+        });
       } catch (err) {
-        console.error("Failed to fetch game:", err);
-        toast.error("Failed to load game data. Please try again.");
-        navigate("/my-projects");
+        console.error(err);
+        toast.error("Failed to load game data");
       } finally {
         setLoading(false);
       }
     };
 
     fetchGame();
-  }, [id, navigate]);
+  }, [id]);
 
   const addItem = () => {
     setItems((prev) => [...prev, { leftContent: "", rightContent: "" }]);
@@ -116,7 +124,15 @@ function EditPairOrNoPair() {
     setItems(newItems);
   };
 
+  const handleThumbnailChange = (file: File | null) => {
+    setThumbnail(file);
+    if (file) setThumbnailPreview(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async (publish = false) => {
+    if (!thumbnail && !thumbnailPreview) {
+      return toast.error("Thumbnail is required");
+    }
     if (!title.trim()) return toast.error("Game title is required");
     if (items.length < 2) return toast.error("Minimum 2 pairs required");
 
@@ -132,11 +148,15 @@ function EditPairOrNoPair() {
     const formData = new FormData();
     formData.append("name", title);
     formData.append("description", description);
-    if (thumbnail) {
+
+    if (thumbnail instanceof File) {
       formData.append("thumbnail_image", thumbnail);
     }
-    // Always send is_publish: true for publish, false for draft
-    formData.append("is_publish", String(publish));
+
+    formData.append(
+      "is_publish",
+      String(publish || settings.isPublishImmediately),
+    );
     formData.append(
       "items",
       JSON.stringify(
@@ -148,30 +168,24 @@ function EditPairOrNoPair() {
     );
 
     try {
+      setLoading(true);
       await api.patch(`/api/game/game-type/pair-or-no-pair/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      toast.success(
-        publish
-          ? "Game updated and published successfully!"
-          : "Game updated successfully!",
-      );
+      toast.success("Game updated successfully!");
       navigate("/my-projects");
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Failed to update game:", err);
-      const axiosError = err as AxiosError<{ message?: string }>;
-      const errorMessage =
-        axiosError.response?.data?.message ||
-        axiosError.message ||
-        "Failed to update game. Please try again.";
-      toast.error(errorMessage);
+      toast.error("Failed to update game. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   if (loading) {
     return (
       <div className="w-full h-screen flex justify-center items-center">
-        <Typography variant="h3">Loading...</Typography>
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-300 border-t-black"></div>
       </div>
     );
   }
@@ -182,26 +196,19 @@ function EditPairOrNoPair() {
         <Button
           size="sm"
           variant="ghost"
-          className="hidden md:flex"
           onClick={() => navigate("/my-projects")}
         >
           <ArrowLeft /> Back
         </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="block md:hidden"
-          onClick={() => navigate("/my-projects")}
-        >
-          <ArrowLeft />
-        </Button>
       </div>
+
       <div className="w-full h-full p-8 justify-center items-center flex flex-col">
         <div className="max-w-3xl w-full space-y-6">
           <div>
             <Typography variant="h3">Edit Pair or No Pair Game</Typography>
             <Typography variant="p" className="mt-2">
-              Update your matching game
+              Update your matching game. Changes will be saved when you click
+              Save or Publish.
             </Typography>
           </div>
 
@@ -225,34 +232,13 @@ function EditPairOrNoPair() {
               onChange={(e) => setDescription(e.target.value)}
             />
             <div>
-              <Label className="mb-2">Thumbnail Image</Label>
-              {thumbnailPreview && !thumbnail && (
-                <div className="mb-4">
-                  <img
-                    src={thumbnailPreview}
-                    alt="Current thumbnail"
-                    className="w-32 h-32 object-cover rounded-md"
-                  />
-                </div>
-              )}
               <Dropzone
-                label={
-                  thumbnailPreview
-                    ? "Change Thumbnail Image"
-                    : "Thumbnail Image"
-                }
+                required
+                defaultValue={thumbnailPreview ?? undefined}
+                label="Thumbnail Image"
                 allowedTypes={["image/png", "image/jpeg"]}
                 maxSize={2 * 1024 * 1024}
-                onChange={(file) => {
-                  setThumbnail(file);
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      setThumbnailPreview(reader.result as string);
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
+                onChange={handleThumbnailChange}
               />
             </div>
           </div>
@@ -304,39 +290,40 @@ function EditPairOrNoPair() {
                   </Label>
                   <FormField
                     label=""
-                    placeholder="e.g., 🍎 or image URL"
+                    placeholder="e.g., https://example.com/apple.jpg"
                     type="text"
                     value={item.rightContent}
                     onChange={(e) =>
                       handleItemChange(index, "rightContent", e.target.value)
                     }
                   />
+                  <Typography variant="small" className="mt-1 text-gray-500">
+                    Enter text or image URL
+                  </Typography>
                 </div>
               </div>
             </div>
           ))}
 
           {/* Settings Section */}
-          <div className="bg-white w-full h-full p-6 space-y-6 rounded-xl border">
+          <div className="bg-white w-full p-6 space-y-6 rounded-xl border">
             <Typography variant="p">Settings</Typography>
             <div className="flex justify-between items-center">
               <div>
-                <Label>Publish Game</Label>
+                <Label>Publish Immediately</Label>
                 <Typography variant="small">
-                  Make the game publicly available
+                  Make the game public right away
                 </Typography>
               </div>
-              <div>
-                <Switch
-                  checked={settings.isPublishImmediately}
-                  onCheckedChange={(val: boolean) =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      isPublishImmediately: val,
-                    }))
-                  }
-                />
-              </div>
+              <Switch
+                checked={settings.isPublishImmediately}
+                onCheckedChange={(val) =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    isPublishImmediately: val,
+                  }))
+                }
+              />
             </div>
           </div>
 
@@ -373,13 +360,12 @@ function EditPairOrNoPair() {
               <SaveIcon /> Save Draft
             </Button>
             <Button
-              disabled={items.length < 2}
               size="sm"
               variant="outline"
               className="bg-black text-white"
               onClick={() => handleSubmit(true)}
             >
-              <EyeIcon /> Update & Publish
+              <EyeIcon /> Publish
             </Button>
           </div>
         </div>
