@@ -1444,7 +1444,11 @@ function PlaySlidingPuzzle() {
                 <img
                   src={`${import.meta.env.VITE_API_URL}/${puzzle.puzzle_image}`}
                   alt="Puzzle Preview"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
                 />
               </div>
               {/* Difficulty Badge */}
@@ -2189,7 +2193,9 @@ function PlaySlidingPuzzle() {
             <Trophy
               size={80}
               color="#ffd700"
-              style={{ filter: "drop-shadow(0 0 20px rgba(255, 215, 0, 0.6))" }}
+              style={{
+                filter: "drop-shadow(0 0 20px rgba(255, 215, 0, 0.6))",
+              }}
             />
 
             <div style={{ textAlign: "center" }}>
@@ -2255,7 +2261,10 @@ function PlaySlidingPuzzle() {
                 </span>
               </div>
               <div
-                style={{ width: "1px", background: "rgba(255,255,255,0.1)" }}
+                style={{
+                  width: "1px",
+                  background: "rgba(255,255,255,0.1)",
+                }}
               />
               <div style={{ textAlign: "center" }}>
                 <span
@@ -2283,19 +2292,29 @@ function PlaySlidingPuzzle() {
             {/* Actions */}
             <div
               className="win-actions"
-              style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}
+              style={{
+                display: "flex",
+                gap: "1rem",
+                marginTop: "1rem",
+              }}
             >
               <button
                 onClick={shuffleTiles}
                 className="game-btn"
-                style={{ fontSize: "1.2rem", padding: "1rem 2rem" }}
+                style={{
+                  fontSize: "1.2rem",
+                  padding: "1rem 2rem",
+                }}
               >
                 <RotateCcw size={20} /> Play Again
               </button>
               <button
                 onClick={handleExit}
                 className="game-btn-outline-blue"
-                style={{ fontSize: "1.2rem", padding: "1rem 2rem" }}
+                style={{
+                  fontSize: "1.2rem",
+                  padding: "1rem 2rem",
+                }}
               >
                 <ArrowLeft size={20} /> Exit Game
               </button>

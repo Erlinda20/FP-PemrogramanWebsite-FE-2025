@@ -30,12 +30,10 @@ import EditOpenTheBox from "./pages/open-the-box/editOpenTheBox";
 // 📌 TAMBAHAN 1: Import Komponen Game Pair or No Pair
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
-import EditPairOrNoPair from "./pages/pair-or-no-pair/edit";
-import Leaderboard from "./pages/pair-or-no-pair/Leaderboard";
-import RedirectPlayRoute from "./pages/RedirectPlayRoute";
 import CreateTrueOrFalse from "./pages/true-or-false/CreateTrueOrFalse";
 import EditTrueOrFalse from "./pages/true-or-false/EditTrueOrFalse";
 import PlayTrueOrFalse from "./pages/true-or-false/TrueOrFalse";
+import EditPairOrNoPair from "./pages/pair-or-no-pair/edit";
 
 import CreateSlidingPuzzle from "./pages/sliding-puzzle/CreateSlidingPuzzle";
 import EditSlidingPuzzle from "./pages/sliding-puzzle/EditSlidingPuzzle";
@@ -81,18 +79,6 @@ function App() {
           path="/pair-or-no-pair/play/:gameId"
           element={<PairOrNoPairGame />}
         />
-        <Route
-          path="/matching-pair/play/:gameId"
-          element={<PairOrNoPairGame />}
-        />
-        <Route
-          path="/pair-or-no-pair/leaderboard/:gameId"
-          element={<Leaderboard />}
-        />
-        <Route
-          path="/matching-pair/leaderboard/:gameId"
-          element={<Leaderboard />}
-        />
         <Route path="/true-or-false/play/:id" element={<PlayTrueOrFalse />} />
         <Route path="/whack-a-mole/play/:gameId" element={<WhackAMoleGame />} />
         <Route
@@ -122,10 +108,6 @@ function App() {
             path="/create-pair-or-no-pair"
             element={<CreatePairOrNoPair />}
           />
-          <Route
-            path="/create-matching-pair"
-            element={<CreatePairOrNoPair />}
-          />
           <Route path="/create-whack-a-mole" element={<CreateWhackAMole />} />
           <Route path="/whack-a-mole/edit/:id" element={<EditWhackAMole />} />
           <Route path="/create-maze-chase" element={<CreateMazeChase />} />
@@ -147,14 +129,6 @@ function App() {
           />
           <Route path="/maze-chase/edit/:id" element={<EditMazeChase />} />
           <Route path="/anagram/edit/:id" element={<EditAnagram />} />
-          <Route
-            path="/pair-or-no-pair/edit/:id"
-            element={<EditPairOrNoPair />}
-          />
-          <Route
-            path="/matching-pair/edit/:id"
-            element={<EditPairOrNoPair />}
-          />
 
           <Route path="/create-unjumble" element={<CreateUnjumble />} />
           <Route path="/unjumble/edit/:id" element={<EditUnjumble />} />
@@ -175,8 +149,6 @@ function App() {
             <Route path="/open-the-box/edit/:id" element={<EditOpenTheBox />} />
           </Route>
         </Route>
-        {/* Catch-all route for malformed play URLs (e.g., /undefined/play/:id) - must be last */}
-        <Route path="/*/play/:id" element={<RedirectPlayRoute />} />
       </Routes>
     </>
   );

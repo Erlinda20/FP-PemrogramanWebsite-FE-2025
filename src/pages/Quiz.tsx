@@ -73,6 +73,34 @@ function Quiz() {
     if (id) fetchQuiz();
   }, [id]);
 
+  if (!quiz) return null;
+
+  const questions = quiz.questions;
+  const isLastQuestion = currentQuestion === questions.length - 1;
+  const isFirstQuestion = currentQuestion === 0;
+  const progress = (currentQuestion / questions.length) * 100;
+
+  const handleNext = () => {
+    if (selectedAnswer === null) return;
+
+    const updatedAnswers = [
+      ...userAnswers,
+      {
+        question_index: questions[currentQuestion].question_index,
+        selected_answer_index: selectedAnswer,
+      },
+    ];
+
+    setUserAnswers(updatedAnswers);
+
+    if (!isLastQuestion) {
+      setCurrentQuestion((prev) => prev + 1);
+      setSelectedAnswer(null);
+    } else {
+      submitQuiz(updatedAnswers);
+    }
+  };
+
   const addPlayCount = async (gameId: string) => {
     try {
       await api.post("/api/game/play-count", {
@@ -104,7 +132,7 @@ function Quiz() {
     }
   };
 
-  if (loading && !finished && !quiz) {
+  if (loading && !finished) {
     return (
       <div className="w-full h-screen flex justify-center items-center">
         <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-300 border-t-black"></div>
@@ -112,7 +140,7 @@ function Quiz() {
     );
   }
 
-  if (error || (!quiz && !loading)) {
+  if (error || !quiz) {
     return (
       <div className="w-full h-screen flex flex-col justify-center items-center gap-4">
         <Typography variant="p">{error ?? "Quiz not found"}</Typography>
@@ -121,50 +149,7 @@ function Quiz() {
     );
   }
 
-  if (!quiz) {
-    return (
-      <div className="w-full h-screen flex justify-center items-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-300 border-t-black"></div>
-      </div>
-    );
-  }
-
-  const questions = quiz.questions;
-  const isLastQuestion = currentQuestion === questions.length - 1;
-  const isFirstQuestion = currentQuestion === 0;
-  const progress =
-    questions.length > 0 ? (currentQuestion / questions.length) * 100 : 0;
   const currentQ = questions[currentQuestion];
-
-  if (questions.length === 0) {
-    return (
-      <div className="w-full h-screen flex flex-col justify-center items-center gap-4">
-        <Typography variant="p">Quiz tidak memiliki pertanyaan.</Typography>
-        <Button onClick={() => navigate(-1)}>Kembali</Button>
-      </div>
-    );
-  }
-
-  const handleNext = () => {
-    if (selectedAnswer === null) return;
-
-    const updatedAnswers = [
-      ...userAnswers,
-      {
-        question_index: questions[currentQuestion].question_index,
-        selected_answer_index: selectedAnswer,
-      },
-    ];
-
-    setUserAnswers(updatedAnswers);
-
-    if (!isLastQuestion) {
-      setCurrentQuestion((prev) => prev + 1);
-      setSelectedAnswer(null);
-    } else {
-      submitQuiz(updatedAnswers);
-    }
-  };
 
   if (finished && result) {
     const { correct_answers, total_questions, max_score, score, percentage } =
