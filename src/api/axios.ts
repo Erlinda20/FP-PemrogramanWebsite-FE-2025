@@ -10,12 +10,15 @@ api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;
     const url = config.url || "";
+    const isPublicRequest = [
+      "/api/game", // list games (public, optional auth)
+      "/api/game/template", // templates are public
+      "/play/public", // public play endpoints
+      "/leaderboard",
+      "/check",
+    ].some((p) => url.includes(p));
 
-    if (url.includes("/api/auth/register") || url.includes("/api/auth/login")) {
-      return config;
-    }
-
-    if (token && config.headers) {
+    if (!isPublicRequest && token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 

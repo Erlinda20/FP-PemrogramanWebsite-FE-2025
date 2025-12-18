@@ -59,6 +59,11 @@ import CreateWhackAMole from "./pages/whack-a-mole/create";
 import EditWhackAMole from "./pages/whack-a-mole/edit";
 
 import SpeedSorting from "./pages/speed-sorting/SpeedSorting";
+
+import CreateJeopardy from "./pages/jeopardy/CreateJeopardy";
+import JeopardyLobby from "./pages/jeopardy/JeopardyLobby";
+import JeopardyBoard from "./pages/jeopardy/JeopardyBoard";
+import JeopardyGameEnd from "./pages/jeopardy/JeopardyGameEnd";
 import CreateSpeedSorting from "./pages/speed-sorting/CreateSpeedSorting";
 import EditSpeedSorting from "./pages/speed-sorting/EditSpeedSorting";
 
@@ -95,6 +100,9 @@ function App() {
           path="/sliding-puzzle/play/:id"
           element={<PlaySlidingPuzzle />}
         />
+        <Route path="/jeopardy/play/:id/setup" element={<JeopardyLobby />} />
+        <Route path="/jeopardy/play/:id" element={<JeopardyBoard />} />
+        <Route path="/jeopardy/play/:id/end" element={<JeopardyGameEnd />} />
         <Route path="/airplane/play/:id" element={<AirplaneGeneralGame />} />
 
         <Route element={<ProtectedRoute />}>
@@ -118,6 +126,22 @@ function App() {
             path="/create-type-the-answer"
             element={<CreateTypeTheAnswer />}
           />
+          <Route
+            path="/create-speed-sorting"
+            element={<CreateSpeedSorting />}
+          />
+          <Route path="/create-anagram" element={<CreateAnagram />} />
+          <Route
+            path="/create-pair-or-no-pair"
+            element={<CreatePairOrNoPair />}
+          />
+          <Route path="/create-whack-a-mole" element={<CreateWhackAMole />} />
+          <Route path="/whack-a-mole/edit/:id" element={<EditWhackAMole />} />
+          <Route path="/create-maze-chase" element={<CreateMazeChase />} />
+          <Route path="/create-anagram" element={<CreateAnagram />} />
+          <Route path="/create-jeopardy" element={<CreateJeopardy />} />
+          <Route path="/quiz/edit/:id" element={<EditQuiz />} />
+          <Route path="/flip-tiles/edit/:id" element={<EditFlipTiles />} />
           <Route
             path="/type-the-answer/edit/:id"
             element={<EditTypeTheAnswer />}
@@ -169,6 +193,7 @@ function App() {
             path="/sliding-puzzle/edit/:id"
             element={<EditSlidingPuzzle />}
           />
+          <Route path="/jeopardy/edit/:id" element={<CreateJeopardy />} />
         </Route>
       </Routes>
     </>

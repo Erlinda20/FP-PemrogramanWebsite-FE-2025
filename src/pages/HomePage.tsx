@@ -162,6 +162,7 @@ export default function HomePage() {
     orderByName,
     gameTypeSlug,
     initialLoading,
+    token,
   ]);
 
   const handleLike = async (e: React.MouseEvent, gameId: string) => {
