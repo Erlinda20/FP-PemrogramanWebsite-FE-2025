@@ -62,9 +62,8 @@ function Quiz() {
           `/api/game/game-type/quiz/${id}/play/public`,
         );
         setQuiz(response.data.data);
-      } catch (err) {
+      } catch {
         setError("Failed to load quiz.");
-        console.error(err);
         toast.error("Failed to load quiz.");
       } finally {
         setLoading(false);
@@ -74,79 +73,12 @@ function Quiz() {
     if (id) fetchQuiz();
   }, [id]);
 
-  const addPlayCount = async (gameId: string) => {
-    try {
-      await api.post("/api/game/play-count", {
-        game_id: gameId,
-      });
-    } catch (err) {
-      console.error("Failed to update play count:", err);
-      toast.error("Failed to update play count.");
-    }
-  };
-
-  const submitQuiz = async (finalAnswers?: typeof userAnswers) => {
-    try {
-      setLoading(true);
-
-      const response = await api.post(`/api/game/game-type/quiz/${id}/check`, {
-        answers: finalAnswers ?? userAnswers,
-      });
-
-      setResult(response.data.data);
-
-      // Increment play count for all users (both authenticated and public)
-      await addPlayCount(id!);
-
-      setFinished(true);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to submit quiz.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading && !finished && !quiz) {
-    return (
-      <div className="w-full h-screen flex justify-center items-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-300 border-t-black"></div>
-      </div>
-    );
-  }
-
-  if (error || (!quiz && !loading)) {
-    return (
-      <div className="w-full h-screen flex flex-col justify-center items-center gap-4">
-        <Typography variant="p">{error ?? "Quiz not found"}</Typography>
-        <Button onClick={() => navigate(-1)}>Go Back</Button>
-      </div>
-    );
-  }
-
-  if (!quiz) {
-    return (
-      <div className="w-full h-screen flex justify-center items-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-300 border-t-black"></div>
-      </div>
-    );
-  }
+  if (!quiz) return null;
 
   const questions = quiz.questions;
   const isLastQuestion = currentQuestion === questions.length - 1;
   const isFirstQuestion = currentQuestion === 0;
-  const progress =
-    questions.length > 0 ? (currentQuestion / questions.length) * 100 : 0;
-  const currentQ = questions[currentQuestion];
-
-  if (questions.length === 0) {
-    return (
-      <div className="w-full h-screen flex flex-col justify-center items-center gap-4">
-        <Typography variant="p">Quiz tidak memiliki pertanyaan.</Typography>
-        <Button onClick={() => navigate(-1)}>Kembali</Button>
-      </div>
-    );
-  }
+  const progress = (currentQuestion / questions.length) * 100;
 
   const handleNext = () => {
     if (selectedAnswer === null) return;
@@ -168,6 +100,56 @@ function Quiz() {
       submitQuiz(updatedAnswers);
     }
   };
+
+  const addPlayCount = async (gameId: string) => {
+    try {
+      await api.post("/api/game/play-count", {
+        game_id: gameId,
+      });
+    } catch {
+      toast.error("Failed to update play count.");
+    }
+  };
+
+  const submitQuiz = async (finalAnswers?: typeof userAnswers) => {
+    try {
+      setLoading(true);
+
+      const response = await api.post(`/api/game/game-type/quiz/${id}/check`, {
+        answers: finalAnswers ?? userAnswers,
+      });
+
+      setResult(response.data.data);
+
+      // Increment play count for all users (both authenticated and public)
+      await addPlayCount(id!);
+
+      setFinished(true);
+    } catch {
+      setError("Failed to submit quiz.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && !finished) {
+    return (
+      <div className="w-full h-screen flex justify-center items-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-300 border-t-black"></div>
+      </div>
+    );
+  }
+
+  if (error || !quiz) {
+    return (
+      <div className="w-full h-screen flex flex-col justify-center items-center gap-4">
+        <Typography variant="p">{error ?? "Quiz not found"}</Typography>
+        <Button onClick={() => navigate(-1)}>Go Back</Button>
+      </div>
+    );
+  }
+
+  const currentQ = questions[currentQuestion];
 
   if (finished && result) {
     const { correct_answers, total_questions, max_score, score, percentage } =

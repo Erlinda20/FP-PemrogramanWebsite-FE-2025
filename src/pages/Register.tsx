@@ -52,25 +52,30 @@ export default function RegisterPage() {
         username,
         email,
         password,
+        confirm_password: confirmPassword,
       });
 
       navigate("/login");
     } catch (err) {
       console.error("Registration error:", err);
-      const error = err as AxiosError<{ message: string }>;
-      const errorMessage =
-        error.response?.data?.message || "Registrasi gagal. Silakan coba lagi.";
-      setError(errorMessage);
+      if (err instanceof AxiosError) {
+        const errorMessage =
+          err.response?.data?.message || "Registrasi gagal. Silakan coba lagi.";
+        setError(errorMessage);
+      } else {
+        setError("Registrasi gagal. Silakan coba lagi.");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  // bg-gradient-to-br is a valid Tailwind CSS class
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-[#B8D4FF] to-[#FFEEB2] p-4">
+    <div className="flex min-h-screen w-full items-center justify-center bg-linear-to-br from-[#B8D4FF] to-[#FFEEB2] p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="items-center pt-8">
-          <Typography variant="h4" className="text-center !font-bold mt-2">
+          <Typography variant="h4" className="text-center font-bold mt-2">
             Welcome!
           </Typography>
 
