@@ -32,8 +32,9 @@ type Project = {
   description: string;
   thumbnail_image: string | null;
   is_published: boolean;
-  game_template_name: string;
-  game_template_slug: string;
+  game_template_name?: string;
+  game_template_slug?: string;
+  game_template?: string;
 };
 
 export default function MyProjectsPage() {
@@ -58,12 +59,19 @@ export default function MyProjectsPage() {
     fetchProjects();
   }, []);
 
+  const getTemplateSlug = (project: Project) => {
+    if (project.game_template_slug) return project.game_template_slug;
+    if (project.game_template)
+      return project.game_template.toLowerCase().replace(/\s+/g, "-");
+    return "quiz"; // fallback
+  };
+
   const handleDeleteProject = async (
-    projectTemplate: string,
     projectId: string,
+    templateSlug: string,
   ) => {
     try {
-      await api.delete(`/api/game/game-type/${projectTemplate}/${projectId}`);
+      await api.delete(`/api/game/game-type/${templateSlug}/${projectId}`);
       setProjects((prev) => prev.filter((p) => p.id !== projectId));
       toast.success("Project deleted successfully!");
     } catch (err) {
@@ -73,15 +81,15 @@ export default function MyProjectsPage() {
   };
 
   const handleUpdateStatus = async (
-    projectTemplate: string,
     gameId: string,
     isPublish: boolean,
+    templateSlug: string,
   ) => {
     try {
       const form = new FormData();
-      form.append("is_publish", String(isPublish));
+      form.append("is_publish_immediately", String(isPublish));
 
-      await api.patch(`/api/game/game-type/${projectTemplate}/${gameId}`, form);
+      await api.patch(`/api/game/game-type/${templateSlug}/${gameId}`, form);
 
       setProjects((prev) =>
         prev.map((p) =>
@@ -193,15 +201,14 @@ export default function MyProjectsPage() {
                       size="sm"
                       className="h-7"
                       onClick={() => {
-                        if (!project.game_template_slug) {
+                        const slug = getTemplateSlug(project);
+                        if (!slug) {
                           toast.error(
                             "Game template not found. Cannot play this game.",
                           );
                           return;
                         }
-                        navigate(
-                          `/${project.game_template_slug}/play/${project.id}`,
-                        );
+                        navigate(`/${slug}/play/${project.id}`);
                       }}
                     >
                       <Play />
@@ -213,9 +220,9 @@ export default function MyProjectsPage() {
                     size="sm"
                     className="h-7"
                     onClick={() => {
-                      navigate(
-                        `/${project.game_template_slug}/edit/${project.id}`,
-                      );
+                      const slug = getTemplateSlug(project);
+                      if (!slug) return;
+                      navigate(`/${slug}/edit/${project.id}`);
                     }}
                   >
                     <Edit />
@@ -228,9 +235,9 @@ export default function MyProjectsPage() {
                       className="h-7"
                       onClick={() => {
                         handleUpdateStatus(
-                          project.game_template_slug,
                           project.id,
                           false,
+                          getTemplateSlug(project),
                         );
                       }}
                     >
@@ -244,9 +251,9 @@ export default function MyProjectsPage() {
                       className="h-7"
                       onClick={() => {
                         handleUpdateStatus(
-                          project.game_template_slug,
                           project.id,
                           true,
+                          getTemplateSlug(project),
                         );
                       }}
                     >
@@ -282,8 +289,8 @@ export default function MyProjectsPage() {
                           className="bg-red-600 hover:bg-red-700"
                           onClick={() => {
                             handleDeleteProject(
-                              project.game_template_slug,
                               project.id,
+                              getTemplateSlug(project),
                             );
                           }}
                         >

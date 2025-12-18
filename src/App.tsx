@@ -12,6 +12,9 @@ import Sandbox from "./pages/Sandbox";
 import CreateSpeedSorting from "./pages/speed-sorting/CreateSpeedSorting";
 import EditSpeedSorting from "./pages/speed-sorting/EditSpeedSorting";
 import SpeedSorting from "./pages/speed-sorting/SpeedSorting";
+import PlayMatchingPair from "./pages/matching-pair/PlayMatchingPair";
+import CreateMatchingPair from "./pages/matching-pair/CreateMatchingPair";
+import EditMatchingPair from "./pages/matching-pair/EditMatchingPair";
 import ProtectedRoute from "./routes/ProtectedRoutes";
 import CreateAnagram from "./pages/Anagram/CreateAnagram";
 import PlayAnagram from "./pages/Anagram/PlayAnagram";
@@ -39,10 +42,7 @@ function App() {
           path="/pair-or-no-pair/play/:gameId"
           element={<PairOrNoPairGame />}
         />
-        <Route
-          path="/matching-pair/play/:gameId"
-          element={<PairOrNoPairGame />}
-        />
+        <Route path="/matching-pair/play/:id" element={<PlayMatchingPair />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfilePage />} />
@@ -59,7 +59,7 @@ function App() {
           />
           <Route
             path="/create-matching-pair"
-            element={<CreatePairOrNoPair />}
+            element={<CreateMatchingPair />}
           />
           <Route path="/quiz/edit/:id" element={<EditQuiz />} />
           <Route
@@ -74,7 +74,7 @@ function App() {
           />
           <Route
             path="/matching-pair/edit/:id"
-            element={<EditPairOrNoPair />}
+            element={<EditMatchingPair />}
           />
         </Route>
         {/* Catch-all route for malformed play URLs (e.g., /undefined/play/:id) - must be last */}

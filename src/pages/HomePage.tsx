@@ -16,7 +16,7 @@ import { Typography } from "@/components/ui/typography";
 import { useAuthStore } from "@/store/useAuthStore";
 import { ChevronDown, User } from "lucide-react";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+// toast not used here
 import iconHeartSolid from "../assets/images/icon-heart-solid.svg";
 import iconHeart from "../assets/images/icon-heart.svg";
 import iconPlay from "../assets/images/icon-play.svg";
@@ -197,11 +197,7 @@ export default function HomePage() {
 
   const GameCard = ({ game }: { game: Game }) => {
     const handlePlayGame = () => {
-      if (!game.game_template_slug) {
-        toast.error("Game template not found. Cannot play this game.");
-        return;
-      }
-      window.location.href = `/${game.game_template_slug}/play/${game.id}`;
+      window.location.href = `/quiz/play/${game.id}`;
     };
 
     return (
@@ -409,6 +405,7 @@ export default function HomePage() {
                     );
                     setOrderByCreatedAt(null);
                     setOrderByLikeAmount(null);
+                    // toast removed (unused) to satisfy linter
                   }}
                   className={orderByPlayAmount === "desc" ? "bg-sky-100" : ""}
                 >
