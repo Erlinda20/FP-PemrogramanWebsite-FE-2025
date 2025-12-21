@@ -66,10 +66,10 @@ export default function Leaderboard() {
         } else {
           setError("Failed to load leaderboard");
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error fetching leaderboard:", err);
         setError(
-          err.response?.data?.message || "Failed to load leaderboard"
+          (err as any)?.response?.data?.message || "Failed to load leaderboard"
         );
       } finally {
         setLoading(false);

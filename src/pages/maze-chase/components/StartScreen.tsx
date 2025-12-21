@@ -36,10 +36,12 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, hideButton }) => {
 
   // Play audio on mount and cleanup on unmount
   useEffect(() => {
+    const audio = audioRef.current;
+
     // Attempt to play on mount
     const playAudio = () => {
-      if (audioRef.current) {
-        audioRef.current.play().catch(() => {
+      if (audio) {
+        audio.play().catch(() => {
           // If autoplay fails, add click listener for user interaction
         });
       }
@@ -49,8 +51,8 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, hideButton }) => {
 
     // Add click listener as fallback for autoplay blocking
     const handleUserInteraction = () => {
-      if (audioRef.current) {
-        audioRef.current.play();
+      if (audio) {
+        audio.play();
       }
       window.removeEventListener("click", handleUserInteraction);
     };
@@ -58,7 +60,6 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStart, hideButton }) => {
     window.addEventListener("click", handleUserInteraction);
 
     return () => {
-      const audio = audioRef.current;
       if (audio) {
         audio.pause();
         audio.currentTime = 0;

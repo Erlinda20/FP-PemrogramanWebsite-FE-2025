@@ -71,12 +71,14 @@ export default function FlipTiles() {
   };
 
   // Cleanup spinner on unmount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    const timeouts = timeoutsRef.current;
     return () => {
       if (spinnerIntervalRef.current) {
         clearInterval(spinnerIntervalRef.current);
       }
-      timeoutsRef.current.forEach(clearTimeout);
+      timeouts.forEach(clearTimeout);
     };
   }, []);
 

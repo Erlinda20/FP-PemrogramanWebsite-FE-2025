@@ -328,7 +328,7 @@ function PlaySlidingPuzzle() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isStarted, isPaused, isFinished, puzzle?.time_limit]);
+  }, [isStarted, isPaused, isFinished, puzzle?.time_limit, toastStyle]);
 
   const shuffleTiles = useCallback(() => {
     if (!puzzle) return;
@@ -584,7 +584,7 @@ function PlaySlidingPuzzle() {
         toast.error("Could not find a valid move.", toastStyle);
       }
     }
-  }, [cachedHint, isCalculatingHint]);
+  }, [cachedHint, isCalculatingHint, applyHint, toastStyle]);
 
   const applyHint = (path: any[], found: boolean) => {
     // Determine how many steps to show

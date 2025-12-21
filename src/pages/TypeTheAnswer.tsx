@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "@/api/axios";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import toast from "react-hot-toast";
 import { Typography } from "@/components/ui/typography";
 import {
@@ -133,7 +133,55 @@ function TypeTheAnswer() {
     if (id) fetchGame();
   }, [id, token]);
 
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      // Fetch leaderboard from API
+      const response = await api.get(
+        `/api/game/game-type/type-the-answer/${id}/leaderboard`,
+      );
+      console.log("Leaderboard response:", response.data);
+      const leaderboardData = response.data.data || [];
+      console.log("Leaderboard data:", leaderboardData);
+      setLeaderboard(leaderboardData);
+    } catch (err) {
+      console.error("Failed to fetch leaderboard:", err);
+      // Don't show error toast, leaderboard is optional
+    }
+  }, [id]);
+
+  const submitGame = useCallback(async (finalAnswers: typeof userAnswers) => {
+    try {
+      setLoading(true);
+
+      // Calculate completion time
+      const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+      setCompletionTime(timeSpent);
+
+      const response = await api.post(
+        `/api/game/game-type/type-the-answer/${id}/check`,
+        {
+          answers: finalAnswers,
+          completion_time: timeSpent,
+        },
+      );
+
+      setResult(response.data.data);
+
+      // Fetch leaderboard
+      await fetchLeaderboard();
+
+      setFinished(true);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to submit game.");
+      toast.error("Failed to submit game.");
+    } finally {
+      setLoading(false);
+    }
+  }, [startTime, setLoading, setCompletionTime, setResult, setFinished, setError, fetchLeaderboard, id]);
+
   // Timer logic
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!gameStarted || isPaused || finished) return;
 
@@ -151,7 +199,7 @@ function TypeTheAnswer() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [gameStarted, isPaused, finished, userAnswers]);
+  }, [gameStarted, isPaused, finished, userAnswers, submitGame]);
 
   const startGame = () => {
     setGameStarted(true);
@@ -210,53 +258,6 @@ function TypeTheAnswer() {
     }
 
     navigate("/");
-  };
-
-  const submitGame = async (finalAnswers: typeof userAnswers) => {
-    try {
-      setLoading(true);
-
-      // Calculate completion time
-      const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-      setCompletionTime(timeSpent);
-
-      const response = await api.post(
-        `/api/game/game-type/type-the-answer/${id}/check`,
-        {
-          answers: finalAnswers,
-          completion_time: timeSpent,
-        },
-      );
-
-      setResult(response.data.data);
-
-      // Fetch leaderboard
-      await fetchLeaderboard();
-
-      setFinished(true);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to submit game.");
-      toast.error("Failed to submit game.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchLeaderboard = async () => {
-    try {
-      // Fetch leaderboard from API
-      const response = await api.get(
-        `/api/game/game-type/type-the-answer/${id}/leaderboard`,
-      );
-      console.log("Leaderboard response:", response.data);
-      const leaderboardData = response.data.data || [];
-      console.log("Leaderboard data:", leaderboardData);
-      setLeaderboard(leaderboardData);
-    } catch (err) {
-      console.error("Failed to fetch leaderboard:", err);
-      // Don't show error toast, leaderboard is optional
-    }
   };
 
   if (loading && !game) {
