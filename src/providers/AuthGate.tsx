@@ -24,7 +24,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         logout();
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [setToken, setUser, logout]);
 
   if (loading) {
     return (
