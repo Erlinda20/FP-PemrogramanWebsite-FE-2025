@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "@/api/axios";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { Typography } from "@/components/ui/typography";
 import { ArrowLeft, Trophy, RotateCcw } from "lucide-react";
@@ -87,9 +87,9 @@ export default function PlayMatchingPair() {
     if (game && !session) {
       generateSession();
     }
-  }, [game]);
+  }, [game, generateSession, session]);
 
-  const generateSession = async () => {
+  const generateSession = useCallback(async () => {
     if (!id) return;
     try {
       const response = await api.post(
@@ -100,7 +100,7 @@ export default function PlayMatchingPair() {
       console.error(err);
       toast.error("Failed to generate game session.");
     }
-  };
+  }, [id]);
 
   const handleCardClick = async (index: number) => {
     if (
