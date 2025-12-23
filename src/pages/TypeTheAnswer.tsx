@@ -149,39 +149,50 @@ function TypeTheAnswer() {
     }
   }, [id]);
 
-  const submitGame = useCallback(async (finalAnswers: typeof userAnswers) => {
-    try {
-      setLoading(true);
+  const submitGame = useCallback(
+    async (finalAnswers: typeof userAnswers) => {
+      try {
+        setLoading(true);
 
-      // Calculate completion time
-      const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-      setCompletionTime(timeSpent);
+        // Calculate completion time
+        const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+        setCompletionTime(timeSpent);
 
-      const response = await api.post(
-        `/api/game/game-type/type-the-answer/${id}/check`,
-        {
-          answers: finalAnswers,
-          completion_time: timeSpent,
-        },
-      );
+        const response = await api.post(
+          `/api/game/game-type/type-the-answer/${id}/check`,
+          {
+            answers: finalAnswers,
+            completion_time: timeSpent,
+          },
+        );
 
-      setResult(response.data.data);
+        setResult(response.data.data);
 
-      // Fetch leaderboard
-      await fetchLeaderboard();
+        // Fetch leaderboard
+        await fetchLeaderboard();
 
-      setFinished(true);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to submit game.");
-      toast.error("Failed to submit game.");
-    } finally {
-      setLoading(false);
-    }
-  }, [startTime, setLoading, setCompletionTime, setResult, setFinished, setError, fetchLeaderboard, id]);
+        setFinished(true);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to submit game.");
+        toast.error("Failed to submit game.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      startTime,
+      setLoading,
+      setCompletionTime,
+      setResult,
+      setFinished,
+      setError,
+      fetchLeaderboard,
+      id,
+    ],
+  );
 
   // Timer logic
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!gameStarted || isPaused || finished) return;
 
@@ -364,7 +375,7 @@ function TypeTheAnswer() {
 
             {/* Leaderboard */}
             {leaderboard.length > 0 && (
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-xl space-y-4 border-2 border-indigo-200">
+              <div className="bg-linear-to-br from-indigo-50 to-purple-50 p-6 rounded-xl space-y-4 border-2 border-indigo-200">
                 <div className="flex items-center justify-center gap-2">
                   <Trophy className="text-indigo-600" size={24} />
                   <Typography variant="h3" className="text-indigo-700">
@@ -585,7 +596,7 @@ function TypeTheAnswer() {
                 value={progress}
               >
                 <Progress.Indicator
-                  className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full transition-all duration-300 ease-in-out"
+                  className="bg-linear-to-r from-indigo-500 to-purple-500 h-full transition-all duration-300 ease-in-out"
                   style={{ width: `${progress}%` }}
                 />
               </Progress.Root>

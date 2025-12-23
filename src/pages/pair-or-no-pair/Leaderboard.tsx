@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "@/api/axios";
+import { isAxiosError } from "axios";
 
 interface LeaderboardEntry {
   id: string;
@@ -55,7 +56,7 @@ export default function Leaderboard() {
               page,
               per_page: perPage,
             },
-          }
+          },
         );
 
         if (response.data.success) {
@@ -68,9 +69,13 @@ export default function Leaderboard() {
         }
       } catch (err: unknown) {
         console.error("Error fetching leaderboard:", err);
-        setError(
-          (err as any)?.response?.data?.message || "Failed to load leaderboard"
-        );
+        const fallback = "Failed to load leaderboard";
+        if (isAxiosError(err)) {
+          const data = err.response?.data as { message?: string } | undefined;
+          setError(typeof data?.message === "string" ? data.message : fallback);
+        } else {
+          setError(fallback);
+        }
       } finally {
         setLoading(false);
       }
@@ -156,12 +161,24 @@ export default function Leaderboard() {
             <table className="w-full">
               <thead className="bg-white/20">
                 <tr>
-                  <th className="px-6 py-4 text-left text-white font-bold">Rank</th>
-                  <th className="px-6 py-4 text-left text-white font-bold">Player</th>
-                  <th className="px-6 py-4 text-center text-white font-bold">Score</th>
-                  <th className="px-6 py-4 text-center text-white font-bold">Max Combo</th>
-                  <th className="px-6 py-4 text-center text-white font-bold">Time</th>
-                  <th className="px-6 py-4 text-center text-white font-bold">Pairs</th>
+                  <th className="px-6 py-4 text-left text-white font-bold">
+                    Rank
+                  </th>
+                  <th className="px-6 py-4 text-left text-white font-bold">
+                    Player
+                  </th>
+                  <th className="px-6 py-4 text-center text-white font-bold">
+                    Score
+                  </th>
+                  <th className="px-6 py-4 text-center text-white font-bold">
+                    Max Combo
+                  </th>
+                  <th className="px-6 py-4 text-center text-white font-bold">
+                    Time
+                  </th>
+                  <th className="px-6 py-4 text-center text-white font-bold">
+                    Pairs
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -231,7 +248,8 @@ export default function Leaderboard() {
           </div>
 
           {/* Pagination */}
-          {(leaderboard.meta.total_pages || leaderboard.meta.lastPage || 1) > 1 && (
+          {(leaderboard.meta.total_pages || leaderboard.meta.lastPage || 1) >
+            1 && (
             <div className="bg-white/10 px-6 py-4 flex justify-between items-center">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -269,4 +287,3 @@ export default function Leaderboard() {
     </div>
   );
 }
-

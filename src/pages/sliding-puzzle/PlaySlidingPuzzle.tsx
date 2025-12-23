@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "@/api/axios";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import toast from "react-hot-toast";
 import { Typography } from "@/components/ui/typography";
 import {
@@ -121,21 +120,56 @@ function PlaySlidingPuzzle() {
   };
 
   // Premium Toast Style
-  const toastStyle = {
-    style: {
-      background: "rgba(20, 20, 30, 0.95)",
-      color: "#fff",
-      border: "1px solid rgba(255, 107, 53, 0.5)",
-      fontFamily: "'Sen', sans-serif",
-      padding: "12px 20px",
-      boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
-      borderRadius: "12px",
+  const toastStyle = useMemo(
+    () => ({
+      style: {
+        background: "rgba(20, 20, 30, 0.95)",
+        color: "#fff",
+        border: "1px solid rgba(255, 107, 53, 0.5)",
+        fontFamily: "'Sen', sans-serif",
+        padding: "12px 20px",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+        borderRadius: "12px",
+      },
+      iconTheme: {
+        primary: "#ff6b35",
+        secondary: "#ffffff",
+      },
+    }),
+    [],
+  );
+
+  const applyHint = useCallback(
+    (path: Move[], found: boolean) => {
+      // Determine how many steps to show
+      const stepsToShow = 1;
+      // if (found) {
+      //     if (gridSize === 4) stepsToShow = Math.min(2, path.length);
+      //     else if (gridSize === 5) stepsToShow = Math.min(3, path.length);
+      //     else if (gridSize >= 6) stepsToShow = Math.min(4, path.length);
+      // }
+
+      const selectedMoves = path.slice(0, stepsToShow);
+      setHintMoves(selectedMoves);
+      setShowHint(true);
+
+      setHintProgress({ current: 0, total: found ? path.length : 1 });
+      setUserHintsLeft((prev) => prev - 1);
+
+      if (found) {
+        toast.success(`Solution: ${path.length} steps to solve!`, toastStyle);
+      } else {
+        toast("Best next move calculated", { icon: "💡", ...toastStyle });
+      }
+
+      const timeout = found ? 8000 : 5000;
+      setTimeout(() => {
+        setShowHint(false);
+        setHintProgress(null);
+      }, timeout);
     },
-    iconTheme: {
-      primary: "#ff6b35",
-      secondary: "#ffffff",
-    },
-  };
+    [toastStyle],
+  );
 
   useEffect(() => {
     const fetchPuzzle = async () => {
@@ -222,7 +256,7 @@ function PlaySlidingPuzzle() {
         audio.removeEventListener("timeupdate", handleTimeUpdate);
       };
     }
-  }, [isStarted, loading]);
+  }, [isStarted, loading, isMuted]);
 
   // Countdown effect
   useEffect(() => {
@@ -252,7 +286,7 @@ function PlaySlidingPuzzle() {
         }
       };
     }
-  }, [isLoadingGame]);
+  }, [isLoadingGame, isMuted]);
 
   // BGM Logic
   const bgmRef = useRef<HTMLAudioElement | null>(null);
@@ -585,35 +619,6 @@ function PlaySlidingPuzzle() {
       }
     }
   }, [cachedHint, isCalculatingHint, applyHint, toastStyle]);
-
-  const applyHint = (path: any[], found: boolean) => {
-    // Determine how many steps to show
-    const stepsToShow = 1;
-    // if (found) {
-    //     if (gridSize === 4) stepsToShow = Math.min(2, path.length);
-    //     else if (gridSize === 5) stepsToShow = Math.min(3, path.length);
-    //     else if (gridSize >= 6) stepsToShow = Math.min(4, path.length);
-    // }
-
-    const selectedMoves = path.slice(0, stepsToShow);
-    setHintMoves(selectedMoves);
-    setShowHint(true);
-
-    setHintProgress({ current: 0, total: found ? path.length : 1 });
-    setUserHintsLeft((prev) => prev - 1);
-
-    if (found) {
-      toast.success(`Solution: ${path.length} steps to solve!`, toastStyle);
-    } else {
-      toast("Best next move calculated", { icon: "💡", ...toastStyle });
-    }
-
-    const timeout = found ? 8000 : 5000;
-    setTimeout(() => {
-      setShowHint(false);
-      setHintProgress(null);
-    }, timeout);
-  };
 
   const addPlayCount = async (gameId: string) => {
     try {

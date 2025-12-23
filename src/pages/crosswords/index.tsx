@@ -102,7 +102,7 @@ export default function PlayCrossword() {
   useEffect(() => {
     const audio = new Audio(bgmSound);
     audio.loop = true;
-    audio.volume = volume;
+    // audio.volume = volume;
     audioRef.current = audio;
 
     return () => {

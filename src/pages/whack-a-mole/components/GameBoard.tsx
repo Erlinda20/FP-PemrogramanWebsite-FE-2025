@@ -319,6 +319,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     bossHealth,
     showLevelTransition,
     speedMultiplier,
+    timeLeft,
   ]);
 
   const handleWhack = (index: number) => {

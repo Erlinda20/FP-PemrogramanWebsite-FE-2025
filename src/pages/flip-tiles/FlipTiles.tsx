@@ -71,7 +71,6 @@ export default function FlipTiles() {
   };
 
   // Cleanup spinner on unmount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const timeouts = timeoutsRef.current;
     return () => {
