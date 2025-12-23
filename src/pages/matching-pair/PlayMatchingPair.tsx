@@ -63,6 +63,19 @@ export default function PlayMatchingPair() {
   const [result, setResult] = useState<FinishGameResponse | null>(null);
   const [isChecking, setIsChecking] = useState(false);
 
+  const generateSession = useCallback(async () => {
+    if (!id) return;
+    try {
+      const response = await api.post(
+        `/api/game/game-type/matching-pair/${id}/play/generate`,
+      );
+      setSession(response.data.data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to generate game session.");
+    }
+  }, [id]);
+
   useEffect(() => {
     const fetchGame = async () => {
       try {
@@ -88,19 +101,6 @@ export default function PlayMatchingPair() {
       generateSession();
     }
   }, [game, generateSession, session]);
-
-  const generateSession = useCallback(async () => {
-    if (!id) return;
-    try {
-      const response = await api.post(
-        `/api/game/game-type/matching-pair/${id}/play/generate`,
-      );
-      setSession(response.data.data);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to generate game session.");
-    }
-  }, [id]);
 
   const handleCardClick = async (index: number) => {
     if (

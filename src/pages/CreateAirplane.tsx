@@ -41,7 +41,7 @@ export default function CreateAirplane() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { "image/*": [] },
     maxFiles: 1,
-    onDrop: (acceptedFiles) => {
+    onDrop: (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
       setThumbnail(file);
       setPreview(URL.createObjectURL(file));
